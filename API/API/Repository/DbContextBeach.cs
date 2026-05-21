@@ -15,5 +15,9 @@ namespace API.Repository
         }
 
         public DbSet<Cliente> Clientes { get; set; }
+
+        public DbSet<Paquete> Paquetes { get; set; }
+
+        public DbSet<Reservacion> Reservaciones { get; set; }
     }
 }

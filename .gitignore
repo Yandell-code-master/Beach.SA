@@ -1,2 +1,11 @@
-.vs/
+**/bin/
+**/obj/
+**/.vs/
 AGENTS.md
+API/API/bin/Debug/net8.0/API.dll
+API/API/bin/Debug/net8.0/API.dll
+API/API/bin/Debug/net8.0/API.dll
+*.dll
+/API/API/bin/Debug/net8.0
+API/API/bin/Debug/net8.0/API.dll
+/API/API/bin/Debug/net8.0
