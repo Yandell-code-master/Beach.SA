@@ -6,8 +6,7 @@ using Microsoft.AspNetCore.Authorization; //referencia para usar el dbcontext
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/Reservaciones")]//Se crea la ruta para los endpoint
-    [Authorize]
+    [Route("api/[controller]")]//Se crea la ruta para los endpoint
     public class ReservacionesController : ControllerBase
     {
         //Variable para manejar la referencia del ORM
