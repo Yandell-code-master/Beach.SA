@@ -152,7 +152,7 @@ namespace API.Controllers
                             temp.Mensualidad = (temp.TotalFinal - (temp.TotalFinal * paquete.Prima)) / paquete.Meses;
 
                             //Se obtiene el tipo de cambio
-                            temp.TipoCambio = Convert.ToDecimal(452.07); //Se usa 452.07 ya que es el tipo de cambio actual del dolar
+                            temp.TipoCambio = Convert.ToDecimal(452.22); //Se usa 454.22 ya que es el tipo de cambio actual del dolar según el banco central
 
                             //Se calcula el total en dolares
                             temp.TotalDolares = temp.TotalFinal / temp.TipoCambio;
@@ -298,7 +298,7 @@ namespace API.Controllers
                                 reservacionActual.Mensualidad = (reservacionActual.TotalFinal - (reservacionActual.TotalFinal * paquete.Prima)) / paquete.Meses;
 
                                 //Se obtiene el tipo de cambio 
-                                reservacionActual.TipoCambio = Convert.ToDecimal(452.07); //Se usa 452.07 ya que es el tipo de cambio actual del dolar
+                                reservacionActual.TipoCambio = Convert.ToDecimal(454.22); //Se usa 454.22 ya que es el tipo de cambio actual del dolar según el banco central
 
                                 //Se recalcula el total en dolares
                                 reservacionActual.TotalDolares = reservacionActual.TotalFinal / reservacionActual.TipoCambio;
