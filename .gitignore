@@ -1,11 +1,14 @@
+# Carpetas de compilación y temporales
 **/bin/
 **/obj/
 **/.vs/
-AGENTS.md
-API/API/bin/Debug/net8.0/API.dll
-API/API/bin/Debug/net8.0/API.dll
-API/API/bin/Debug/net8.0/API.dll
-*.dll
-/API/API/bin/Debug/net8.0
-API/API/bin/Debug/net8.0/API.dll
-/API/API/bin/Debug/net8.0
+
+# Archivos de configuración de usuario
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Archivos de caché o temporales de .NET
+*.cache
+*.db
