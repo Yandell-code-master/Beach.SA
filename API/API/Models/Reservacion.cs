@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace API.Models
 {
@@ -56,10 +57,12 @@ namespace API.Models
 
         //Relación con Cliente
         [ForeignKey("Cedula")]
+        [JsonIgnore] // Se le pone para que este atributo no aparezca en el json
         public Cliente? Cliente { get; set; }
 
         //Relación con Paquete
         [ForeignKey("IdPaquete")]
+        [JsonIgnore]
         public Paquete? Paquete { get; set; }
     }
 }
