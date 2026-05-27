@@ -11,7 +11,7 @@ namespace API.Models
 
         //Llave foránea del cliente
         [Required(ErrorMessage = "La cedula del cliente es obligatorio.")]
-        public int Cedula { get; set; }
+        public string Cedula { get; set; }
 
         //Llave foránea del paquete
         [Required(ErrorMessage = "El paquete es obligatorio.")]

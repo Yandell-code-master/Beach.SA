@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace API.Migrations
 {
     [DbContext(typeof(DbContextBeach))]
-    [Migration("20260521013539_AddReservacionTable")]
-    partial class AddReservacionTable
+    [Migration("20260527204417_InitialMigrate")]
+    partial class InitialMigrate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,8 +27,9 @@ namespace API.Migrations
 
             modelBuilder.Entity("API.Models.Cliente", b =>
                 {
-                    b.Property<int>("Cedula")
-                        .HasColumnType("int");
+                    b.Property<string>("Cedula")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Direccion")
                         .HasMaxLength(200)
@@ -40,7 +41,6 @@ namespace API.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("NombreCompleto")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -49,7 +49,6 @@ namespace API.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("TipoCedula")
-                        .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)");
 
@@ -106,8 +105,9 @@ namespace API.Migrations
                     b.Property<int>("CantidadPersonas")
                         .HasColumnType("int");
 
-                    b.Property<int>("Cedula")
-                        .HasColumnType("int");
+                    b.Property<string>("Cedula")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<decimal>("Descuento")
                         .HasColumnType("decimal(18,2)");
