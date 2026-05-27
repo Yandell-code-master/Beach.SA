@@ -25,7 +25,7 @@
     "Parameters": [
       {
         "Name": "cedula",
-        "Type": "System.Int32",
+        "Type": "System.String",
         "IsRequired": false
       }
     ],
@@ -51,7 +51,7 @@
     "Parameters": [
       {
         "Name": "cedula",
-        "Type": "System.Int32",
+        "Type": "System.String",
         "IsRequired": false
       }
     ],
@@ -67,13 +67,55 @@
     "Parameters": [
       {
         "Name": "cedula",
-        "Type": "System.Int32",
+        "Type": "System.String",
         "IsRequired": false
       },
       {
         "Name": "nuevosDatos",
         "Type": "API.Models.Cliente",
         "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API.Controllers.FacturaController",
+    "Method": "List",
+    "RelativePath": "api/Factura/List",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API.Controllers.FacturaController",
+    "Method": "PorReservacion",
+    "RelativePath": "api/Factura/PorReservacion/{idReservacion}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "idReservacion",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API.Controllers.FacturaController",
+    "Method": "Search",
+    "RelativePath": "api/Factura/Search",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": false
       }
     ],
     "ReturnTypes": []
@@ -166,22 +208,12 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "temp",
+        "Name": "reservacion",
         "Type": "API.Models.Reservacion",
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "System.String",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
+    "ReturnTypes": []
   },
   {
     "ContainingType": "API.Controllers.ReservacionesController",
@@ -197,17 +229,23 @@
         "IsRequired": false
       }
     ],
-    "ReturnTypes": [
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "API.Controllers.ReservacionesController",
+    "Method": "Factura",
+    "RelativePath": "api/Reservaciones/Factura/{idReservacion}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
       {
-        "Type": "System.String",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
+        "Name": "idReservacion",
+        "Type": "System.Int32",
+        "IsRequired": true
       }
-    ]
+    ],
+    "ReturnTypes": []
   },
   {
     "ContainingType": "API.Controllers.ReservacionesController",
@@ -217,17 +255,7 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
-    "ReturnTypes": [
-      {
-        "Type": "System.Collections.Generic.List\u00601[[API.Models.Reservacion, API, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
+    "ReturnTypes": []
   },
   {
     "ContainingType": "API.Controllers.ReservacionesController",
@@ -243,43 +271,23 @@
         "IsRequired": false
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "API.Models.Reservacion",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
+    "ReturnTypes": []
   },
   {
     "ContainingType": "API.Controllers.ReservacionesController",
-    "Method": "Update",
+    "Method": "Edit",
     "RelativePath": "api/Reservaciones/Update",
     "HttpMethod": "PUT",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "temp",
+        "Name": "datosActualizados",
         "Type": "API.Models.Reservacion",
         "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "System.String",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
+    "ReturnTypes": []
   },
   {
     "ContainingType": "API.Controllers.WeatherForecastController",

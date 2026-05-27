@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace API.Models
 {
@@ -7,14 +8,12 @@ namespace API.Models
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        [Range(1, int.MaxValue, ErrorMessage = "La cédula debe ser un número positivo.")]
-        public int Cedula { get; set; }
+        [StringLength(20, ErrorMessage = "La cédula no puede colgarse de más de 20 caracteres")]
+        public string Cedula { get; set; }
 
-        [Required(ErrorMessage = "El tipo de cédula es obligatorio.")]
         [StringLength(10, ErrorMessage = "El tipo de cédula no puede exceder 10 caracteres.")]
         public string? TipoCedula { get; set; }
 
-        [Required(ErrorMessage = "El nombre completo es obligatorio.")]
         [StringLength(100, ErrorMessage = "El nombre completo no puede exceder 100 caracteres.")]
         public string? NombreCompleto { get; set; }
 

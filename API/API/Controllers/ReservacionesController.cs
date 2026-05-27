@@ -1,376 +1,419 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using API.Models; //referencia para usar los Models
+using API.Models;
 using API.Repository;
-using Microsoft.AspNetCore.Authorization; //referencia para usar el dbcontext
+using API.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]//Se crea la ruta para los endpoint
+    [Route("api/[controller]")]
     public class ReservacionesController : ControllerBase
     {
-        //Variable para manejar la referencia del ORM
-        private DbContextBeach dbContext = null;
+        private readonly DbContextBeach _dbContext;
+        private readonly IPdfService _pdfService;
+        private readonly IEmailService _emailService;
+        private readonly ITipoCambioService _tipoCambioService;
+        private readonly ILogger<ReservacionesController> _logger;
 
-        // constructor con parametros para el api
-        public ReservacionesController(DbContextBeach context)
+        public ReservacionesController(
+            DbContextBeach dbContext,
+            IPdfService pdfService,
+            IEmailService emailService,
+            ITipoCambioService tipoCambioService,
+            ILogger<ReservacionesController> logger)
         {
-            //se asigna la referencia de dbContext
-            this.dbContext = context;
+            _dbContext = dbContext;
+            _pdfService = pdfService;
+            _emailService = emailService;
+            _tipoCambioService = tipoCambioService;
+            _logger = logger;
         }
 
-        //Metodo encargado de obtener la lista de reservaciones
         [HttpGet]
         [Route("List")]
-
-        public List<Reservacion> List()
+        public IActionResult List()
         {
-            return this.dbContext.Reservaciones.ToList();
+            List<Reservacion> reservaciones = _dbContext.Reservaciones
+                .Include(r => r.Cliente)
+                .Include(r => r.Paquete)
+                .ToList();
+            return Ok(reservaciones);
         }
 
-        //Metodo encargado de buscar una reservacion por su id
         [HttpGet]
         [Route("Search")]
-
-        public Reservacion Search(int id)
+        public IActionResult Search(int id)
         {
-            Reservacion temp = new Reservacion() { IdReservacion = id };
+            Reservacion? reservacion = _dbContext.Reservaciones
+                .Include(r => r.Cliente)
+                .Include(r => r.Paquete)
+                .FirstOrDefault(r => r.IdReservacion == id);
 
-            try
+            if (reservacion == null)
             {
-                //Se busca la reservacion
-                var aux = this.dbContext.Reservaciones.FirstOrDefault(x => x.IdReservacion == id);
-
-                //Se valida si existe la reservacion
-                if (aux != null)
-                {
-                    temp = aux;
-                }
-
+                return NotFound($"No se encontró una reservación con el ID {id}.");
             }
-            catch (Exception ex)
-            {
-                //Se almacena la informacion en caso de error
-                temp.MetodoPago = $"Error, {ex.InnerException.Message}";
-            }
-            return temp;
+
+            return Ok(reservacion);
         }
 
-        //Metodo encargado de crear una reservacion
+        [HttpGet]
+        [Route("Factura/{idReservacion}")]
+        public IActionResult Factura(int idReservacion)
+        {
+            Factura? factura = _dbContext.Facturas
+                .FirstOrDefault(f => f.IdReservacion == idReservacion);
+
+            if (factura == null)
+            {
+                return NotFound($"No se encontró una factura para la reservación con ID {idReservacion}.");
+            }
+
+            return Ok(factura);
+        }
+
         [HttpPost]
         [Route("Create")]
-
-        public String Create(Reservacion temp)
+        public async Task<IActionResult> Create(Reservacion reservacion)
         {
-            String msj = "";
-
             try
             {
-                //Se valida si existen datos
-                if (temp == null)
+                if (reservacion == null)
                 {
-                    msj = "No se permiten datos vacios...";
+                    return BadRequest("No se permiten datos vacíos.");
                 }
-                else if (temp.CantidadNoches <= 0)
-                {
-                    msj = "La cantidad de noches debe ser mayor que cero...";
-                }
-                else if (temp.CantidadPersonas <= 0)
-                {
-                    msj = "La cantidad de personas debe ser mayor que cero...";
-                }
-                else if (temp.MetodoPago == "")
-                {
-                    msj = "Debe indicar el metodo de pago...";
-                }
-                else if (temp.MetodoPago == "Cheque" && temp.NumeroCheque == "")
-                {
-                    msj = "Debe indicar el numero de cheque...";
-                }
-                else if (temp.MetodoPago == "Cheque" && temp.BancoCheque == "")
-                {
-                    msj = "Debe indicar el banco del cheque...";
-                }
-                else
-                {
-                    //Se busca el cliente asociado a la reservacion
-                    var cliente = this.dbContext.Clientes.FirstOrDefault(x => x.Cedula == temp.Cedula);
 
-                    //Se busca el paquete asociado a la reservacion
-                    var paquete = this.dbContext.Paquetes.FirstOrDefault(x => x.IdPaquete == temp.IdPaquete);
+                if (reservacion.CantidadNoches <= 0)
+                {
+                    return BadRequest("La cantidad de noches debe ser mayor que cero.");
+                }
 
-                    //Se valida si existe el cliente
-                    if (cliente != null)
+                if (reservacion.CantidadPersonas <= 0)
+                {
+                    return BadRequest("La cantidad de personas debe ser mayor que cero.");
+                }
+
+                if (string.IsNullOrEmpty(reservacion.MetodoPago))
+                {
+                    return BadRequest("Debe indicar el método de pago.");
+                }
+
+                if (reservacion.MetodoPago == "Cheque" && string.IsNullOrEmpty(reservacion.NumeroCheque))
+                {
+                    return BadRequest("Debe indicar el número de cheque.");
+                }
+
+                if (reservacion.MetodoPago == "Cheque" && string.IsNullOrEmpty(reservacion.BancoCheque))
+                {
+                    return BadRequest("Debe indicar el banco del cheque.");
+                }
+
+                Cliente? cliente = await _dbContext.Clientes
+                    .FirstOrDefaultAsync(c => c.Cedula == reservacion.Cedula);
+
+                if (cliente == null)
+                {
+                    return BadRequest("El cliente asociado no existe.");
+                }
+
+                Paquete? paquete = await _dbContext.Paquetes
+                    .FirstOrDefaultAsync(p => p.IdPaquete == reservacion.IdPaquete);
+
+                if (paquete == null)
+                {
+                    return BadRequest("El paquete asociado no existe.");
+                }
+
+                // --- Cálculos financieros ---
+                decimal subTotal = paquete.PrecioPorNoche * reservacion.CantidadNoches;
+
+                decimal descuento = 0;
+                decimal porcentajeDescuento = 0;
+
+                if (reservacion.MetodoPago == "Efectivo")
+                {
+                    if (reservacion.CantidadNoches >= 3 && reservacion.CantidadNoches <= 6)
                     {
-                        //Se valida si existe el paquete
-                        if (paquete != null)
-                        {
-                            //Se calcula subtotal
-                            temp.SubTotal = paquete.PrecioPorNoche * temp.CantidadNoches;
-
-                            //Se calcula el descuento segun la cantidad de noches y metodo de pago
-                            if (temp.MetodoPago == "Efectivo")
-                            {
-                                if (temp.CantidadNoches >= 3 && temp.CantidadNoches <= 6)
-                                {
-                                    temp.Descuento = temp.SubTotal * Convert.ToDecimal(0.10);
-                                }
-                                else if (temp.CantidadNoches >= 7 && temp.CantidadNoches <= 9)
-                                {
-                                    temp.Descuento = temp.SubTotal * Convert.ToDecimal(0.15);
-                                }
-                                else if (temp.CantidadNoches >= 10 && temp.CantidadNoches <= 12)
-                                {
-                                    temp.Descuento = temp.SubTotal * Convert.ToDecimal(0.20);
-                                }
-                                else if (temp.CantidadNoches >= 13)
-                                {
-                                    temp.Descuento = temp.SubTotal * Convert.ToDecimal(0.25);
-                                }
-                                else
-                                {
-                                    temp.Descuento = 0;
-                                }
-                            }
-                            else
-                            {
-                                //Tarjeta y cheque no tienen descuento
-                                temp.Descuento = 0;
-                            }
-
-                            //Se calcula el IVA
-                            temp.IVA = temp.SubTotal * Convert.ToDecimal(0.13);
-
-                            //Se calcula el total final
-                            temp.TotalFinal = temp.SubTotal + temp.IVA - temp.Descuento;
-
-                            //Se obtiene la prima del paquete
-                            temp.Prima = paquete.Prima;
-
-                            //Se calcula mensualidad
-                            temp.Mensualidad = (temp.TotalFinal - (temp.TotalFinal * paquete.Prima)) / paquete.Meses;
-
-                            //Se obtiene el tipo de cambio
-                            temp.TipoCambio = Convert.ToDecimal(452.22); //Se usa 454.22 ya que es el tipo de cambio actual del dolar según el banco central
-
-                            //Se calcula el total en dolares
-                            temp.TotalDolares = temp.TotalFinal / temp.TipoCambio;
-
-                            //Se agrega la fecha actual
-                            temp.FechaReservacion = DateTime.Now;
-
-                            //Se agrega la reservacion
-                            this.dbContext.Reservaciones.Add(temp);
-
-                            //Se aplican los cambios
-                            this.dbContext.SaveChanges();
-
-                            msj = $"Reservacion {temp.IdReservacion} almacenada correctamente...";
-                        }
-                        else
-                        {
-                            msj = "El paquete asociado no existe...";
-                        }
+                        porcentajeDescuento = 5;
+                        descuento = subTotal * 0.05m;
                     }
-                    else
+                    else if (reservacion.CantidadNoches >= 7 && reservacion.CantidadNoches <= 9)
                     {
-                        msj = "El cliente asociado no existe...";
+                        porcentajeDescuento = 15;
+                        descuento = subTotal * 0.15m;
+                    }
+                    else if (reservacion.CantidadNoches >= 10 && reservacion.CantidadNoches <= 12)
+                    {
+                        porcentajeDescuento = 20;
+                        descuento = subTotal * 0.20m;
+                    }
+                    else if (reservacion.CantidadNoches >= 13)
+                    {
+                        porcentajeDescuento = 25;
+                        descuento = subTotal * 0.25m;
                     }
                 }
 
+                decimal montoGravable = subTotal - descuento;
+                decimal iva = montoGravable * 0.13m;
+                decimal totalFinal = montoGravable + iva;
+
+                decimal prima = paquete.Prima;
+                decimal mensualidad = 0;
+                if (paquete.Meses > 0)
+                {
+                    mensualidad = (totalFinal - (totalFinal * prima)) / paquete.Meses;
+                }
+
+                decimal tipoCambio = await _tipoCambioService.ObtenerTipoCambioVentaAsync();
+                decimal totalDolares = totalFinal / tipoCambio;
+
+                // --- Asignar valores calculados ---
+                reservacion.SubTotal = subTotal;
+                reservacion.Descuento = descuento;
+                reservacion.IVA = iva;
+                reservacion.TotalFinal = totalFinal;
+                reservacion.Prima = prima;
+                reservacion.Mensualidad = mensualidad;
+                reservacion.TipoCambio = tipoCambio;
+                reservacion.TotalDolares = totalDolares;
+                reservacion.FechaReservacion = DateTime.Now;
+
+                _dbContext.Reservaciones.Add(reservacion);
+                await _dbContext.SaveChangesAsync();
+
+                // --- Crear factura asociada (snapshot en BD) ---
+                var factura = new Factura
+                {
+                    IdReservacion = reservacion.IdReservacion,
+                    Cedula = cliente.Cedula,
+                    NombreCompleto = cliente.NombreCompleto,
+                    CorreoElectronico = cliente.Email,
+                    Telefono = cliente.Telefono,
+                    NombrePaquete = paquete.Descripcion,
+                    PrecioPorNoche = paquete.PrecioPorNoche,
+                    CantidadNoches = reservacion.CantidadNoches,
+                    CantidadPersonas = reservacion.CantidadPersonas,
+                    SubTotal = subTotal,
+                    Descuento = descuento,
+                    PorcentajeDescuento = porcentajeDescuento,
+                    MontoGravable = montoGravable,
+                    IVA = iva,
+                    TotalFinal = totalFinal,
+                    TipoCambio = tipoCambio,
+                    TotalDolares = totalDolares,
+                    MetodoPago = reservacion.MetodoPago,
+                    FechaEmision = DateTime.Now
+                };
+
+                _dbContext.Facturas.Add(factura);
+                await _dbContext.SaveChangesAsync();
+
+                _logger.LogInformation(
+                    "Reservación {Id} creada exitosamente para cliente {Cedula} — Factura {IdFactura} generada.",
+                    reservacion.IdReservacion, reservacion.Cedula, factura.IdFactura);
+
+                // --- Disparar tarea en segundo plano para PDF + email ---
+                // No se reusa _dbContext aquí porque el DbContext se libera al terminar
+                // la petición HTTP. En su lugar, se pasan todos los datos ya cargados.
+                int idReservacion = reservacion.IdReservacion;
+                var reservacionSnapshot = reservacion;
+                var clienteSnapshot = cliente;
+                var paqueteSnapshot = paquete;
+                var loggerSnapshot = _logger;
+                var pdfServiceSnapshot = _pdfService;
+                var emailServiceSnapshot = _emailService;
+
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        byte[] pdfBytes = pdfServiceSnapshot.GenerarPdfReservacion(
+                            reservacionSnapshot,
+                            clienteSnapshot,
+                            paqueteSnapshot,
+                            tipoCambio,
+                            porcentajeDescuento);
+
+                        string nombreArchivo = $"Factura_Reservacion_{idReservacion:D4}.pdf";
+
+                        string asunto = $"Beach.SA - Comprobante de Reservación N° FAC-{idReservacion:D4}";
+
+                        string cuerpo = $@"
+<html>
+<body style='font-family: Calibri, sans-serif; padding: 20px;'>
+    <h2 style='color: #0d47a1;'>¡Reservación confirmada!</h2>
+    <p>Estimado(a) <strong>{clienteSnapshot.NombreCompleto}</strong>,</p>
+    <p>Gracias por elegir <strong>Beach.SA - Hotel & Resort</strong>.</p>
+    <p>Su reservación <strong>N° FAC-{idReservacion:D4}</strong> ha sido procesada exitosamente.</p>
+    <p>Adjunto encontrará su comprobante de reservación en formato PDF con el detalle completo
+       de su estadía, desglose económico y totalización en colones y dólares.</p>
+    <hr style='border: 1px solid #0d47a1;' />
+    <p style='font-size: 12px; color: #666;'>
+        <strong>Resumen:</strong><br/>
+        Paquete: {paqueteSnapshot.Descripcion}<br/>
+        Noches: {reservacionSnapshot.CantidadNoches}<br/>
+        Total: ₡{reservacionSnapshot.TotalFinal:N2} / ${reservacionSnapshot.TotalDolares:N2} USD<br/>
+        Método de pago: {reservacionSnapshot.MetodoPago}
+    </p>
+    <hr style='border: 1px solid #0d47a1;' />
+    <p style='font-size: 11px; color: #999;'>
+        Beach.SA - Hotel & Resort | Tel: (506) 2222-0000<br/>
+        Este es un mensaje automático, por favor no responder.
+    </p>
+</body>
+</html>";
+
+                        await emailServiceSnapshot.EnviarCorreoConAdjuntoAsync(
+                            clienteSnapshot.Email!,
+                            asunto,
+                            cuerpo,
+                            pdfBytes,
+                            nombreArchivo);
+
+                        loggerSnapshot.LogInformation(
+                            "PDF y correo enviado para reservación {Id} a {Email}.",
+                            idReservacion, clienteSnapshot.Email);
+                    }
+                    catch (Exception ex)
+                    {
+                        loggerSnapshot.LogError(ex,
+                            "Error en tarea de fondo al generar PDF/email para reservación {Id}.",
+                            idReservacion);
+                    }
+                });
+
+                return Ok(reservacion);
             }
             catch (Exception ex)
             {
-                //Se almacena la informacion en caso de error
-                msj = $"Error al guardar, {ex.InnerException.Message}";
+                _logger.LogError(ex, "Error al crear reservación.");
+                return StatusCode(500, $"Error interno al guardar la reservación: {ex.InnerException?.Message ?? ex.Message}");
             }
-            return msj;
         }
 
-        //Metodo encargado de actualizar una reservacion
         [HttpPut]
         [Route("Update")]
-
-        public String Update(Reservacion temp)
+        public async Task<IActionResult> Edit(Reservacion datosActualizados)
         {
-            String msj = "";
-
             try
             {
-                //Se valida si existen datos
-                if (temp == null)
+                if (datosActualizados == null)
                 {
-                    msj = "No se permiten datos vacios...";
-                }
-                else if (temp.CantidadNoches <= 0)
-                {
-                    msj = "La cantidad de noches debe ser mayor que cero...";
-                }
-                else if (temp.CantidadPersonas <= 0)
-                {
-                    msj = "La cantidad de personas debe ser mayor que cero...";
-                }
-                else if (temp.MetodoPago == "")
-                {
-                    msj = "Debe indicar el metodo de pago...";
-                }
-                else if (temp.MetodoPago == "Cheque" && temp.NumeroCheque == "")
-                {
-                    msj = "Debe indicar el numero de cheque...";
-                }
-                else if (temp.MetodoPago == "Cheque" && temp.BancoCheque == "")
-                {
-                    msj = "Debe indicar el banco del cheque...";
-                }
-                else
-                {
-                    //Se busca el cliente asociado a la reservacion
-                    var cliente = this.dbContext.Clientes.FirstOrDefault(x => x.Cedula == temp.Cedula);
-
-                    //Se busca el paquete asociado a la reservacion
-                    var paquete = this.dbContext.Paquetes.FirstOrDefault(x => x.IdPaquete == temp.IdPaquete);
-
-                    //Se valida si existe el cliente
-                    if (cliente != null)
-                    {
-                        //Se valida si existe el paquete
-                        if (paquete != null)
-                        {
-                            //Se busca la reservacion actual
-                            var reservacionActual = this.dbContext.Reservaciones.FirstOrDefault(x => x.IdReservacion == temp.IdReservacion);
-
-                            //Se valida si existe la reservacion
-                            if (reservacionActual != null)
-                            {
-                                //Se actualizan los datos
-                                reservacionActual.Cedula = temp.Cedula;
-                                reservacionActual.IdPaquete = temp.IdPaquete;
-                                reservacionActual.CantidadNoches = temp.CantidadNoches;
-                                reservacionActual.CantidadPersonas = temp.CantidadPersonas;
-                                reservacionActual.MetodoPago = temp.MetodoPago;
-                                reservacionActual.NumeroCheque = temp.NumeroCheque;
-                                reservacionActual.BancoCheque = temp.BancoCheque;
-
-                                //Se recalcula el subtotal
-                                reservacionActual.SubTotal = paquete.PrecioPorNoche * temp.CantidadNoches;
-
-                                //Se recalcula el descuento segun la cantidad de noches y metodo de pago
-                                if (temp.MetodoPago == "Efectivo")
-                                {
-                                    if (temp.CantidadNoches >= 3 && temp.CantidadNoches <= 6)
-                                    {
-                                        reservacionActual.Descuento = reservacionActual.SubTotal * Convert.ToDecimal(0.10);
-                                    }
-                                    else if (temp.CantidadNoches >= 7 && temp.CantidadNoches <= 9)
-                                    {
-                                        reservacionActual.Descuento = reservacionActual.SubTotal * Convert.ToDecimal(0.15);
-                                    }
-                                    else if (temp.CantidadNoches >= 10 && temp.CantidadNoches <= 12)
-                                    {
-                                        reservacionActual.Descuento = reservacionActual.SubTotal * Convert.ToDecimal(0.20);
-                                    }
-                                    else if (temp.CantidadNoches >= 13)
-                                    {
-                                        reservacionActual.Descuento = reservacionActual.SubTotal * Convert.ToDecimal(0.25);
-                                    }
-                                    else
-                                    {
-                                        reservacionActual.Descuento = 0;
-                                    }
-                                }
-                                else
-                                {
-                                    //Tarjeta y cheque no tienen descuento
-                                    reservacionActual.Descuento = 0;
-                                }
-
-                                //Se recalcula el IVA
-                                reservacionActual.IVA = reservacionActual.SubTotal * Convert.ToDecimal(0.13);
-
-                                //Se recalcula el monto total final
-                                reservacionActual.TotalFinal = reservacionActual.SubTotal + reservacionActual.IVA - reservacionActual.Descuento;
-
-                                //Se obtiene prima
-                                reservacionActual.Prima = paquete.Prima;
-
-                                //Se recalcula la mensualidad
-                                reservacionActual.Mensualidad = (reservacionActual.TotalFinal - (reservacionActual.TotalFinal * paquete.Prima)) / paquete.Meses;
-
-                                //Se obtiene el tipo de cambio 
-                                reservacionActual.TipoCambio = Convert.ToDecimal(454.22); //Se usa 454.22 ya que es el tipo de cambio actual del dolar según el banco central
-
-                                //Se recalcula el total en dolares
-                                reservacionActual.TotalDolares = reservacionActual.TotalFinal / reservacionActual.TipoCambio;
-
-                                //Se actualiza el registro
-                                this.dbContext.Reservaciones.Update(reservacionActual);
-
-                                //Se aplican los cambios
-                                this.dbContext.SaveChanges();
-
-                                msj = $"Reservacion {temp.IdReservacion} actualizada correctamente...";
-                            }
-                            else
-                            {
-                                msj = $"No existe una reservacion con el id {temp.IdReservacion}";
-                            }
-                        }
-                        else
-                        {
-                            msj = "El paquete asociado no existe...";
-                        }
-                    }
-                    else
-                    {
-                        msj = "El cliente asociado no existe...";
-                    }
+                    return BadRequest("No se permiten datos vacíos.");
                 }
 
+                Reservacion? reservacionActual = await _dbContext.Reservaciones
+                    .FirstOrDefaultAsync(r => r.IdReservacion == datosActualizados.IdReservacion);
+
+                if (reservacionActual == null)
+                {
+                    return NotFound($"No existe una reservación con el ID {datosActualizados.IdReservacion}.");
+                }
+
+                Cliente? cliente = await _dbContext.Clientes
+                    .FirstOrDefaultAsync(c => c.Cedula == datosActualizados.Cedula);
+
+                if (cliente == null)
+                {
+                    return BadRequest("El cliente asociado no existe.");
+                }
+
+                Paquete? paquete = await _dbContext.Paquetes
+                    .FirstOrDefaultAsync(p => p.IdPaquete == datosActualizados.IdPaquete);
+
+                if (paquete == null)
+                {
+                    return BadRequest("El paquete asociado no existe.");
+                }
+
+                // --- Actualizar campos editables ---
+                reservacionActual.Cedula = datosActualizados.Cedula;
+                reservacionActual.IdPaquete = datosActualizados.IdPaquete;
+                reservacionActual.CantidadNoches = datosActualizados.CantidadNoches;
+                reservacionActual.CantidadPersonas = datosActualizados.CantidadPersonas;
+                reservacionActual.MetodoPago = datosActualizados.MetodoPago;
+                reservacionActual.NumeroCheque = datosActualizados.NumeroCheque;
+                reservacionActual.BancoCheque = datosActualizados.BancoCheque;
+
+                // --- Recalcular montos ---
+                decimal subTotal = paquete.PrecioPorNoche * datosActualizados.CantidadNoches;
+                decimal descuento = 0;
+
+                if (datosActualizados.MetodoPago == "Efectivo")
+                {
+                    if (datosActualizados.CantidadNoches >= 3 && datosActualizados.CantidadNoches <= 6)
+                        descuento = subTotal * 0.05m;
+                    else if (datosActualizados.CantidadNoches >= 7 && datosActualizados.CantidadNoches <= 9)
+                        descuento = subTotal * 0.15m;
+                    else if (datosActualizados.CantidadNoches >= 10 && datosActualizados.CantidadNoches <= 12)
+                        descuento = subTotal * 0.20m;
+                    else if (datosActualizados.CantidadNoches >= 13)
+                        descuento = subTotal * 0.25m;
+                }
+
+                decimal montoGravable = subTotal - descuento;
+                decimal iva = montoGravable * 0.13m;
+                decimal totalFinal = montoGravable + iva;
+
+                decimal tipoCambio = await _tipoCambioService.ObtenerTipoCambioVentaAsync();
+                decimal totalDolares = totalFinal / tipoCambio;
+                decimal mensualidad = 0;
+                if (paquete.Meses > 0)
+                {
+                    mensualidad = (totalFinal - (totalFinal * paquete.Prima)) / paquete.Meses;
+                }
+
+                reservacionActual.SubTotal = subTotal;
+                reservacionActual.Descuento = descuento;
+                reservacionActual.IVA = iva;
+                reservacionActual.TotalFinal = totalFinal;
+                reservacionActual.Prima = paquete.Prima;
+                reservacionActual.Mensualidad = mensualidad;
+                reservacionActual.TipoCambio = tipoCambio;
+                reservacionActual.TotalDolares = totalDolares;
+
+                _dbContext.Reservaciones.Update(reservacionActual);
+                await _dbContext.SaveChangesAsync();
+
+                _logger.LogInformation("Reservación {Id} actualizada exitosamente.", reservacionActual.IdReservacion);
+
+                return Ok(reservacionActual);
             }
             catch (Exception ex)
             {
-                //Se almacena la informacion en caso de error
-                msj = $"Error al modificar, {ex.InnerException.Message}";
+                _logger.LogError(ex, "Error al actualizar reservación {Id}.", datosActualizados?.IdReservacion);
+                return StatusCode(500, $"Error interno al modificar la reservación: {ex.InnerException?.Message ?? ex.Message}");
             }
-            return msj;
         }
 
-        //Metodo encargado de eliminar una reservacion por su id
         [HttpDelete]
         [Route("Delete")]
-
-        public String Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            String msj = "";
-
             try
             {
-                //Se busca la reservacion por su id
-                var temp = this.dbContext.Reservaciones.FirstOrDefault(x => x.IdReservacion == id);
+                Reservacion? reservacion = await _dbContext.Reservaciones
+                    .FirstOrDefaultAsync(r => r.IdReservacion == id);
 
-                //Se valida si existe la reservacion
-                if (temp != null)
+                if (reservacion == null)
                 {
-                    //Se elimina la reservacion
-                    this.dbContext.Reservaciones.Remove(temp);
-
-                    //Se aplican los cambios
-                    this.dbContext.SaveChanges();
-
-                    msj = "Cambios aplicados correctamente...";
-                }
-                else
-                {
-                    msj = $"No existe una reservacion con el id {id}";
+                    return NotFound($"No existe una reservación con el ID {id}.");
                 }
 
+                _dbContext.Reservaciones.Remove(reservacion);
+                await _dbContext.SaveChangesAsync();
+
+                _logger.LogInformation("Reservación {Id} eliminada exitosamente.", id);
+
+                return Ok($"Reservación {id} eliminada correctamente.");
             }
             catch (Exception ex)
             {
-                //Se almacena la informacion en caso de error
-                msj = $"Error al eliminar, {ex.InnerException.Message}";
+                _logger.LogError(ex, "Error al eliminar reservación {Id}.", id);
+                return StatusCode(500, $"Error interno al eliminar la reservación: {ex.InnerException?.Message ?? ex.Message}");
             }
-            return msj;
         }
 
     }

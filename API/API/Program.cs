@@ -1,22 +1,31 @@
 using API.Repository;
+using API.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<DbContextBeach>(options => 
+// Registro de servicios de negocio
+builder.Services.AddTransient<ApiServices>();
+builder.Services.AddTransient<IPdfService, PdfService>();
+builder.Services.AddTransient<IEmailService, EmailService>();
+builder.Services.AddTransient<ITipoCambioService, TipoCambioService>();
+
+// HttpClient para TipoCambioService (consulta BCCR)
+builder.Services.AddHttpClient<ITipoCambioService, TipoCambioService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+
+builder.Services.AddDbContext<DbContextBeach>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("LocalString"))
 );
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -24,9 +33,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
