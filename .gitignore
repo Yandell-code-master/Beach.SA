@@ -12,3 +12,8 @@
 # Archivos de caché o temporales de .NET
 *.cache
 *.db
+*.dll
+
+# Archivos del proyecto
+AGENTS.md
+API/API/appsettings.Development.json
