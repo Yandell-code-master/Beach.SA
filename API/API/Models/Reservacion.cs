@@ -55,6 +55,8 @@ namespace API.Models
 
         public DateTime FechaReservacion { get; set; }
 
+        public bool Estado { get; set; } = true;
+
         //Relación con Cliente
         [ForeignKey("Cedula")]
         [JsonIgnore] // Se le pone para que este atributo no aparezca en el json

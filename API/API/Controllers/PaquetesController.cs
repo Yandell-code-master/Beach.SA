@@ -19,7 +19,7 @@ namespace API.Controllers
         [Route("List")]
         public IActionResult List()
         {
-            return Ok(_dbContextBeach.Paquetes.ToList());
+            return Ok(_dbContextBeach.Paquetes.Where(p => p.Estado).ToList());
         }
 
         [HttpPost]
@@ -43,7 +43,7 @@ namespace API.Controllers
         [Route("Update")]
         public IActionResult Edit(int id, Paquete nuevosDatos)
         {
-            var paqueteActualizar = _dbContextBeach.Paquetes.FirstOrDefault(p => p.IdPaquete == id);
+            var paqueteActualizar = _dbContextBeach.Paquetes.FirstOrDefault(p => p.IdPaquete == id && p.Estado);
 
             if (paqueteActualizar == null)
             {
@@ -64,14 +64,14 @@ namespace API.Controllers
         [Route("Delete")]
         public IActionResult Delete(int id)
         {
-            var paqueteEliminar = _dbContextBeach.Paquetes.FirstOrDefault(p => p.IdPaquete == id);
+            var paqueteEliminar = _dbContextBeach.Paquetes.FirstOrDefault(p => p.IdPaquete == id && p.Estado);
 
             if (paqueteEliminar == null)
             {
                 return NotFound("No se encontró el paquete con ese ID.");
             }
 
-            _dbContextBeach.Paquetes.Remove(paqueteEliminar);
+            paqueteEliminar.Estado = false;
             _dbContextBeach.SaveChanges();
             return Ok("Paquete eliminado correctamente.");
         }
@@ -80,7 +80,7 @@ namespace API.Controllers
         [Route("Search")]
         public IActionResult Search(int id)
         {
-            var paquete = _dbContextBeach.Paquetes.FirstOrDefault(p => p.IdPaquete == id);
+            var paquete = _dbContextBeach.Paquetes.FirstOrDefault(p => p.IdPaquete == id && p.Estado);
 
             if (paquete == null)
             {

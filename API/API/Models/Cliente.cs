@@ -28,5 +28,7 @@ namespace API.Models
         [EmailAddress(ErrorMessage = "Email con formato inválido.")]
         [StringLength(100, ErrorMessage = "El email no puede exceder 100 caracteres.")]
         public string? Email { get; set; }
+
+        public bool Estado { get; set; } = true;
     }
 }

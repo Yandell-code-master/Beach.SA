@@ -35,6 +35,7 @@ namespace API.Controllers
         public IActionResult List()
         {
             List<Reservacion> reservaciones = _dbContext.Reservaciones
+                .Where(r => r.Estado)
                 .Include(r => r.Cliente)
                 .Include(r => r.Paquete)
                 .ToList();
@@ -48,7 +49,7 @@ namespace API.Controllers
             Reservacion? reservacion = _dbContext.Reservaciones
                 .Include(r => r.Cliente)
                 .Include(r => r.Paquete)
-                .FirstOrDefault(r => r.IdReservacion == id);
+                .FirstOrDefault(r => r.IdReservacion == id && r.Estado);
 
             if (reservacion == null)
             {
@@ -305,7 +306,7 @@ namespace API.Controllers
                 }
 
                 Reservacion? reservacionActual = await _dbContext.Reservaciones
-                    .FirstOrDefaultAsync(r => r.IdReservacion == datosActualizados.IdReservacion);
+                    .FirstOrDefaultAsync(r => r.IdReservacion == datosActualizados.IdReservacion && r.Estado);
 
                 if (reservacionActual == null)
                 {
@@ -395,14 +396,14 @@ namespace API.Controllers
             try
             {
                 Reservacion? reservacion = await _dbContext.Reservaciones
-                    .FirstOrDefaultAsync(r => r.IdReservacion == id);
+                    .FirstOrDefaultAsync(r => r.IdReservacion == id && r.Estado);
 
                 if (reservacion == null)
                 {
                     return NotFound($"No existe una reservación con el ID {id}.");
                 }
 
-                _dbContext.Reservaciones.Remove(reservacion);
+                reservacion.Estado = false;
                 await _dbContext.SaveChangesAsync();
 
                 _logger.LogInformation("Reservación {Id} eliminada exitosamente.", id);

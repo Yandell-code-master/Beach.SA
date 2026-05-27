@@ -27,7 +27,7 @@ namespace API.Controllers
         [Route("List")]
         public IActionResult List()
         {
-            return Ok(this.dbContextBeach.Clientes.ToList());
+            return Ok(this.dbContextBeach.Clientes.Where(c => c.Estado).ToList());
         }
 
         [HttpPost]
@@ -65,6 +65,7 @@ namespace API.Controllers
 
             cliente.NombreCompleto = clienteDTO.nombre;
             cliente.TipoCedula = clienteDTO.tipoIdentificacion;
+            cliente.Estado = true;
 
             this.dbContextBeach.Clientes.Add(cliente);
             this.dbContextBeach.SaveChanges();
@@ -75,7 +76,7 @@ namespace API.Controllers
         [Route("Update")]
         public IActionResult Edit(string cedula, Cliente nuevosDatos) 
         {
-            Cliente clientePorActualizar = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cedula);
+            Cliente clientePorActualizar = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cedula && c.Estado);
 
             if (clientePorActualizar == null)
             {
@@ -96,13 +97,13 @@ namespace API.Controllers
         [Route("Delete")]
         public IActionResult Delete(string cedula)
         {
-            Cliente clientePorEliminar = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cedula);
+            Cliente clientePorEliminar = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cedula && c.Estado);
             if (clientePorEliminar == null)
             {
                 return NotFound("No se encontró un cliente con ese ID.");
             }
 
-            this.dbContextBeach.Clientes.Remove(clientePorEliminar);
+            clientePorEliminar.Estado = false;
             this.dbContextBeach.SaveChanges();
             return Ok();
         }
@@ -111,7 +112,7 @@ namespace API.Controllers
         [Route("Search")]
         public IActionResult Search(string cedula) 
         { 
-            Cliente clienteBuscado = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cedula);
+            Cliente clienteBuscado = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cedula && c.Estado);
 
             if (clienteBuscado == null)
             {

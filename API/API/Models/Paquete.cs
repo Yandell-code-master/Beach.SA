@@ -31,6 +31,6 @@ namespace API.Models
         public int Meses { get; set; }
 
         //Estado del paquete -- true = activo -- false = inactivo
-        public bool Estado { get; set; }
+        public bool Estado { get; set; } = true;
     }
 }

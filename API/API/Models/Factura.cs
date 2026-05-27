@@ -59,6 +59,8 @@ namespace API.Models
 
         public DateTime FechaEmision { get; set; }
 
+        public bool Estado { get; set; } = true;
+
         // Relación con Reservacion
         [ForeignKey("IdReservacion")]
         [JsonIgnore]
