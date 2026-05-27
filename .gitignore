@@ -15,5 +15,4 @@
 *.dll
 
 # Archivos del proyecto
-AGENTS.md
 API/API/appsettings.Development.json
