@@ -1,7 +1,7 @@
 # Carpetas de compilación y temporales
-**/bin/
-**/obj/
-**/.vs/
+[Bb]in/
+[Oo]bj/
+.vs/
 
 # Archivos de configuración de usuario
 *.user
