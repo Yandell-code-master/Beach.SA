@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using API.Models;
 
 namespace API.Repository
@@ -21,6 +21,12 @@ namespace API.Repository
         public DbSet<Reservacion> Reservaciones { get; set; }
 
         public DbSet<Factura> Facturas { get; set; }
+
+        public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Rol> Roles { get; set; }
+        public DbSet<Funcion> Funciones { get; set; }
+        public DbSet<RolFuncion> RolFunciones { get; set; }
+        public DbSet<Auditoria> Auditorias { get; set; }   // omití si no usás auditoría
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -46,6 +52,52 @@ namespace API.Repository
                       .WithMany()
                       .HasForeignKey(e => e.IdReservacion)
                       .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Usuario>(entity =>
+            {
+                entity.ToTable("Usuarios");
+                entity.HasKey(e => e.IdUsuario);
+                entity.HasIndex(e => e.Email).IsUnique();
+                entity.HasOne(e => e.Rol)
+                      .WithMany(r => r.Usuarios)
+                      .HasForeignKey(e => e.IdRol)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<Rol>(entity =>
+            {
+                entity.ToTable("Roles");
+                entity.HasKey(e => e.IdRol);
+                entity.HasIndex(e => e.Nombre).IsUnique();
+            });
+
+            modelBuilder.Entity<Funcion>(entity =>
+            {
+                entity.ToTable("Funciones");
+                entity.HasKey(e => e.IdFuncion);
+                entity.HasIndex(e => e.Codigo).IsUnique();
+            });
+
+            modelBuilder.Entity<RolFuncion>(entity =>
+            {
+                entity.ToTable("RolFunciones");
+                entity.HasKey(e => e.IdRolFuncion);
+                entity.HasOne(e => e.Rol)
+                      .WithMany(r => r.RolFunciones)
+                      .HasForeignKey(e => e.IdRol)
+                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.Funcion)
+                      .WithMany(f => f.RolFunciones)
+                      .HasForeignKey(e => e.IdFuncion)
+                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasIndex(e => new { e.IdRol, e.IdFuncion }).IsUnique();
+            });
+
+            modelBuilder.Entity<Auditoria>(entity =>   // omití si no usás auditoría
+            {
+                entity.ToTable("Auditoria");
+                entity.HasKey(e => e.IdAuditoria);
             });
         }
     }
