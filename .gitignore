@@ -1,1 +1,18 @@
+# Carpetas de compilación y temporales
+[Bb]in/
+[Oo]bj/
 .vs/
+
+# Archivos de configuración de usuario
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Archivos de caché o temporales de .NET
+*.cache
+*.db
+*.dll
+
+# Archivos del proyecto
+API/API/appsettings.Development.json
