@@ -6,6 +6,7 @@ namespace API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class FacturaController : ControllerBase
     {
         private readonly DbContextBeach _dbContextBeach;
