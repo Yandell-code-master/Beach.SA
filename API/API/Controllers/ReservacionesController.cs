@@ -8,6 +8,7 @@ namespace API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ReservacionesController : ControllerBase
     {
         private readonly DbContextBeach _dbContext;
