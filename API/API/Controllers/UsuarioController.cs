@@ -9,7 +9,7 @@ namespace API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Administrador")]
+    [Authorize]
     public class UsuarioController : ControllerBase
     {
         private readonly DbContextBeach _dbContextBeach;
@@ -23,8 +23,8 @@ namespace API.Controllers
         [Route("List")]
         public IActionResult List()
         {
-            var usuarios = _dbContextBeach.Usuarios.Include(u => u.Rol).Where(u => u.Estado)
-                .Select(u => new { u.IdUsuario, u.Email, u.IdRol, Rol = u.Rol!.Nombre, u.FechaCreacion, u.Estado })
+            var usuarios = _dbContextBeach.Usuarios.Where(u => u.Estado)
+                .Select(u => new { u.IdUsuario, u.Email, u.Estado })
                 .ToList();
             return Ok(usuarios);
         }
@@ -35,15 +35,12 @@ namespace API.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
             if (_dbContextBeach.Usuarios.Any(u => u.Email == dto.Email)) return BadRequest("Ya existe un usuario con ese email.");
-            if (!_dbContextBeach.Roles.Any(r => r.IdRol == dto.IdRol && r.Estado)) return BadRequest("El rol no existe o está inactivo.");
 
             var nuevo = new Usuario
             {
                 Email = dto.Email,
                 Password = dto.Password,
-                IdRol = dto.IdRol,
-                Estado = dto.Estado,
-                FechaCreacion = DateTime.Now
+                Estado = dto.Estado
             };
             _dbContextBeach.Usuarios.Add(nuevo);
             _dbContextBeach.SaveChanges();
@@ -60,7 +57,6 @@ namespace API.Controllers
 
             usuario.Email = dto.Email;
             usuario.Password = dto.Password;
-            usuario.IdRol = dto.IdRol;
             usuario.Estado = dto.Estado;
             _dbContextBeach.SaveChanges();
             return Ok("Usuario actualizado correctamente.");
@@ -72,7 +68,7 @@ namespace API.Controllers
         {
             var usuario = _dbContextBeach.Usuarios.FirstOrDefault(u => u.IdUsuario == id && u.Estado);
             if (usuario == null) return NotFound("No se encontró el usuario.");
-            usuario.Estado = false;   // borrado lógico
+            usuario.Estado = false;
             _dbContextBeach.SaveChanges();
             return Ok("Usuario eliminado correctamente.");
         }
@@ -81,9 +77,9 @@ namespace API.Controllers
         [Route("Search")]
         public IActionResult Search(int id)
         {
-            var usuario = _dbContextBeach.Usuarios.Include(u => u.Rol)
+            var usuario = _dbContextBeach.Usuarios
                 .Where(u => u.IdUsuario == id && u.Estado)
-                .Select(u => new { u.IdUsuario, u.Email, u.IdRol, Rol = u.Rol!.Nombre, u.Estado })
+                .Select(u => new { u.IdUsuario, u.Email, u.Estado })
                 .FirstOrDefault();
             if (usuario == null) return NotFound("No se encontró el usuario.");
             return Ok(usuario);

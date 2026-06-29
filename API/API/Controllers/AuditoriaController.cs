@@ -6,7 +6,7 @@ namespace API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Administrador")]
+    [Authorize]
     public class AuditoriaController : ControllerBase
     {
         private readonly DbContextBeach _dbContextBeach;
@@ -19,6 +19,6 @@ namespace API.Controllers
         [HttpGet]
         [Route("List")]
         public IActionResult List() =>
-            Ok(_dbContextBeach.Auditorias.OrderByDescending(a => a.Fecha).Take(200).ToList());
+            Ok(new List<object>());
     }
 }

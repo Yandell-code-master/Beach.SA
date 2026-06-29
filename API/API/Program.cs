@@ -1,7 +1,6 @@
 using API.Repository;
 using API.Services;
 using Microsoft.EntityFrameworkCore;
-using API.Filters;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -9,10 +8,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers(options =>
-{
-    options.Filters.AddService<AuditoriaActionFilter>();
-});
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -47,8 +43,6 @@ builder.Services.AddTransient<IPdfService, PdfService>();
 builder.Services.AddTransient<IEmailService, EmailService>();
 builder.Services.AddTransient<ITipoCambioService, TipoCambioService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();   // omití si no usás auditoría
-builder.Services.AddScoped<AuditoriaActionFilter>();                  // omití si no usás auditoría
 
 // HttpClient para TipoCambioService (consulta BCCR)
 builder.Services.AddHttpClient<ITipoCambioService, TipoCambioService>(client =>
@@ -57,7 +51,7 @@ builder.Services.AddHttpClient<ITipoCambioService, TipoCambioService>(client =>
 });
 
 builder.Services.AddDbContext<DbContextBeach>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("LocalString"))
+    options.UseSqlServer(builder.Configuration.GetConnectionString("CloudString"))
 );
 
 builder.Services.AddAuthentication(config =>
@@ -90,7 +84,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

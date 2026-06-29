@@ -25,7 +25,6 @@ namespace API.Services
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Email, usuario.Email ?? string.Empty),
-                new Claim(ClaimTypes.Role, usuario.Rol?.Nombre ?? string.Empty),
                 new Claim("IdUsuario", usuario.IdUsuario.ToString())
             };
 
