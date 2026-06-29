@@ -250,29 +250,29 @@ namespace API.Controllers
                             string asunto = $"Beach.SA - Comprobante de Reservación N° FAC-{idReservacion:D4}";
 
                             string cuerpo = $@"
-<html>
-<body style='font-family: Calibri, sans-serif; padding: 20px;'>
-    <h2 style='color: #0d47a1;'>¡Reservación confirmada!</h2>
-    <p>Estimado(a) <strong>{clienteSnapshot.NombreCompleto}</strong>,</p>
-    <p>Gracias por elegir <strong>Beach.SA - Hotel & Resort</strong>.</p>
-    <p>Su reservación <strong>N° FAC-{idReservacion:D4}</strong> ha sido procesada exitosamente.</p>
-    <p>Adjunto encontrará su comprobante de reservación en formato PDF con el detalle completo
-       de su estadía, desglose económico y totalización en colones y dólares.</p>
-    <hr style='border: 1px solid #0d47a1;' />
-    <p style='font-size: 12px; color: #666;'>
-        <strong>Resumen:</strong><br/>
-        Paquete: {paqueteSnapshot.Descripcion}<br/>
-        Noches: {reservacionSnapshot.CantidadNoches}<br/>
-        Total: ₡{reservacionSnapshot.TotalFinal:N2} / ${reservacionSnapshot.TotalDolares:N2} USD<br/>
-        Método de pago: {reservacionSnapshot.MetodoPago}
-    </p>
-    <hr style='border: 1px solid #0d47a1;' />
-    <p style='font-size: 11px; color: #999;'>
-        Beach.SA - Hotel & Resort | Tel: (506) 2222-0000<br/>
-        Este es un mensaje automático, por favor no responder.
-    </p>
-</body>
-</html>";
+                                                <html>
+                                                <body style='font-family: Calibri, sans-serif; padding: 20px;'>
+                                                    <h2 style='color: #0d47a1;'>¡Reservación confirmada!</h2>
+                                                    <p>Estimado(a) <strong>{clienteSnapshot.NombreCompleto}</strong>,</p>
+                                                    <p>Gracias por elegir <strong>Beach.SA - Hotel & Resort</strong>.</p>
+                                                    <p>Su reservación <strong>N° FAC-{idReservacion:D4}</strong> ha sido procesada exitosamente.</p>
+                                                    <p>Adjunto encontrará su comprobante de reservación en formato PDF con el detalle completo
+                                                       de su estadía, desglose económico y totalización en colones y dólares.</p>
+                                                    <hr style='border: 1px solid #0d47a1;' />
+                                                    <p style='font-size: 12px; color: #666;'>
+                                                    <strong>Resumen:</strong><br/>
+                                                        Paquete: {paqueteSnapshot.Descripcion}<br/>
+                                                        Noches: {reservacionSnapshot.CantidadNoches}<br/>
+                                                        Total: ₡{reservacionSnapshot.TotalFinal:N2} / ${reservacionSnapshot.TotalDolares:N2} USD<br/>
+                                                        Método de pago: {reservacionSnapshot.MetodoPago}
+                                                    </p>
+                                                    <hr style='border: 1px solid #0d47a1;' />
+                                                    <p style='font-size: 11px; color: #999;'>
+                                                        Beach.SA - Hotel & Resort | Tel: (506) 2222-0000<br/>
+                                                        Este es un mensaje automático, por favor no responder.
+                                                    </p>
+                                                </body>
+                                                </html>";
 
                             await emailServiceSnapshot.EnviarCorreoConAdjuntoAsync(
                                 clienteSnapshot.Email!,
