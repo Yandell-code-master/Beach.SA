@@ -1,21 +1,5 @@
--- ============================================================
--- Script: CreateDatabase.sql
--- Proyecto: Beach.SA - Hotel & Resort
--- Base de datos: BeachDB
--- Motor: SQL Server
--- Descripcion: Creacion completa de la base de datos con
---              tablas, PKs, FKs, DEFAULTs, CHECKs e indices.
--- ============================================================
+-- Este codigo solo sirve para crear la base de datos en la nube, si se intenta ejecutar esto en local daria un error si no se tiene creada la base de datos de antemano
 
--- Crear la base de datos si no existe
-IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'BeachDB')
-BEGIN
-    CREATE DATABASE [BeachDB];
-END
-GO
-
-USE [BeachDB];
-GO
 
 -- ============================================================
 -- TABLA: Clientes
