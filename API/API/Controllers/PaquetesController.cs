@@ -1,11 +1,13 @@
 ﻿using API.Repository;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using API.Models;
 
 namespace API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class PaqueteController : ControllerBase
     {
         private readonly DbContextBeach _dbContextBeach;

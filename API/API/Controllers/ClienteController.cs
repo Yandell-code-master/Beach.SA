@@ -5,11 +5,13 @@ using Microsoft.Identity.Client;
 using API.Services;
 using Newtonsoft.Json;
 using API.DTO;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ClienteController : ControllerBase
     {
         private DbContextBeach dbContextBeach;
@@ -27,7 +29,7 @@ namespace API.Controllers
         [Route("List")]
         public IActionResult List()
         {
-            return Ok(this.dbContextBeach.Clientes.Where(c => c.Estado).ToList());
+            return Ok(this.dbContextBeach.Clientes.ToList());
         }
 
         [HttpPost]
@@ -65,7 +67,6 @@ namespace API.Controllers
 
             cliente.NombreCompleto = clienteDTO.nombre;
             cliente.TipoCedula = clienteDTO.tipoIdentificacion;
-            cliente.Estado = true;
 
             this.dbContextBeach.Clientes.Add(cliente);
             this.dbContextBeach.SaveChanges();
@@ -76,7 +77,7 @@ namespace API.Controllers
         [Route("Update")]
         public IActionResult Edit(string cedula, Cliente nuevosDatos) 
         {
-            Cliente clientePorActualizar = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cedula && c.Estado);
+            Cliente clientePorActualizar = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cedula);
 
             if (clientePorActualizar == null)
             {
@@ -97,13 +98,13 @@ namespace API.Controllers
         [Route("Delete")]
         public IActionResult Delete(string cedula)
         {
-            Cliente clientePorEliminar = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cedula && c.Estado);
+            Cliente clientePorEliminar = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cedula);
             if (clientePorEliminar == null)
             {
                 return NotFound("No se encontró un cliente con ese ID.");
             }
 
-            clientePorEliminar.Estado = false;
+            this.dbContextBeach.Clientes.Remove(clientePorEliminar);
             this.dbContextBeach.SaveChanges();
             return Ok();
         }
@@ -112,7 +113,7 @@ namespace API.Controllers
         [Route("Search")]
         public IActionResult Search(string cedula) 
         { 
-            Cliente clienteBuscado = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cedula && c.Estado);
+            Cliente clienteBuscado = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cedula);
 
             if (clienteBuscado == null)
             {

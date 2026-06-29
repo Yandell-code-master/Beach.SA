@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
 
 namespace API.Models
 {
@@ -28,7 +27,5 @@ namespace API.Models
         [EmailAddress(ErrorMessage = "Email con formato inválido.")]
         [StringLength(100, ErrorMessage = "El email no puede exceder 100 caracteres.")]
         public string? Email { get; set; }
-
-        public bool Estado { get; set; } = true;
     }
 }

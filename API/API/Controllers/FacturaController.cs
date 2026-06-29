@@ -1,11 +1,13 @@
 using API.Repository;
 using Microsoft.AspNetCore.Mvc;
 using API.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class FacturaController : ControllerBase
     {
         private readonly DbContextBeach _dbContextBeach;

@@ -1,11 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using API.Models;
 
 namespace API.Repository
 {
-    /// <summary>
-    /// Clase que maneja el context de la base de datos
-    /// </summary>
     public class DbContextBeach : DbContext
     {
 
@@ -21,6 +18,8 @@ namespace API.Repository
         public DbSet<Reservacion> Reservaciones { get; set; }
 
         public DbSet<Factura> Facturas { get; set; }
+
+        public DbSet<Usuario> Usuarios { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -45,7 +44,14 @@ namespace API.Repository
                 entity.HasOne(e => e.Reservacion)
                       .WithMany()
                       .HasForeignKey(e => e.IdReservacion)
-                      .OnDelete(DeleteBehavior.Restrict);
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Usuario>(entity =>
+            {
+                entity.ToTable("Usuarios");
+                entity.HasKey(e => e.IdUsuario);
+                entity.HasIndex(e => e.Email).IsUnique();
             });
         }
     }

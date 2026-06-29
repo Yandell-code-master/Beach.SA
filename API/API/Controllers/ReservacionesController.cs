@@ -1,6 +1,7 @@
 using API.Models;
 using API.Repository;
 using API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ namespace API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ReservacionesController : ControllerBase
     {
         private readonly DbContextBeach _dbContext;
@@ -35,7 +37,6 @@ namespace API.Controllers
         public IActionResult List()
         {
             List<Reservacion> reservaciones = _dbContext.Reservaciones
-                .Where(r => r.Estado)
                 .Include(r => r.Cliente)
                 .Include(r => r.Paquete)
                 .ToList();
@@ -49,7 +50,7 @@ namespace API.Controllers
             Reservacion? reservacion = _dbContext.Reservaciones
                 .Include(r => r.Cliente)
                 .Include(r => r.Paquete)
-                .FirstOrDefault(r => r.IdReservacion == id && r.Estado);
+                .FirstOrDefault(r => r.IdReservacion == id);
 
             if (reservacion == null)
             {
@@ -306,7 +307,7 @@ namespace API.Controllers
                 }
 
                 Reservacion? reservacionActual = await _dbContext.Reservaciones
-                    .FirstOrDefaultAsync(r => r.IdReservacion == datosActualizados.IdReservacion && r.Estado);
+                    .FirstOrDefaultAsync(r => r.IdReservacion == datosActualizados.IdReservacion);
 
                 if (reservacionActual == null)
                 {
@@ -396,14 +397,22 @@ namespace API.Controllers
             try
             {
                 Reservacion? reservacion = await _dbContext.Reservaciones
-                    .FirstOrDefaultAsync(r => r.IdReservacion == id && r.Estado);
+                    .FirstOrDefaultAsync(r => r.IdReservacion == id);
 
                 if (reservacion == null)
                 {
                     return NotFound($"No existe una reservación con el ID {id}.");
                 }
 
-                reservacion.Estado = false;
+                Factura? factura = await _dbContext.Facturas
+                    .FirstOrDefaultAsync(f => f.IdReservacion == id);
+
+                if (factura != null)
+                {
+                    _dbContext.Facturas.Remove(factura);
+                }
+
+                _dbContext.Reservaciones.Remove(reservacion);
                 await _dbContext.SaveChangesAsync();
 
                 _logger.LogInformation("Reservación {Id} eliminada exitosamente.", id);
