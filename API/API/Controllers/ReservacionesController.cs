@@ -17,19 +17,22 @@ namespace API.Controllers
         private readonly IEmailService _emailService;
         private readonly ITipoCambioService _tipoCambioService;
         private readonly ILogger<ReservacionesController> _logger;
+        private readonly IServiceScopeFactory _scopeFactory;
 
         public ReservacionesController(
             DbContextBeach dbContext,
             IPdfService pdfService,
             IEmailService emailService,
             ITipoCambioService tipoCambioService,
-            ILogger<ReservacionesController> logger)
+            ILogger<ReservacionesController> logger,
+            IServiceScopeFactory scopeFactory)
         {
             _dbContext = dbContext;
             _pdfService = pdfService;
             _emailService = emailService;
             _tipoCambioService = tipoCambioService;
             _logger = logger;
+            _scopeFactory = scopeFactory;
         }
 
         [HttpGet]
@@ -229,20 +232,24 @@ namespace API.Controllers
 
                 _ = Task.Run(async () =>
                 {
-                    try
+                    using (var scope = _scopeFactory.CreateScope())
                     {
-                        byte[] pdfBytes = pdfServiceSnapshot.GenerarPdfReservacion(
-                            reservacionSnapshot,
-                            clienteSnapshot,
-                            paqueteSnapshot,
-                            tipoCambio,
-                            porcentajeDescuento);
+                        var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                        var pdfService = scope.ServiceProvider.GetRequiredService<IPdfService>();
+                        try
+                        {
+                            byte[] pdfBytes = pdfServiceSnapshot.GenerarPdfReservacion(
+                                reservacionSnapshot,
+                                clienteSnapshot,
+                                paqueteSnapshot,
+                                tipoCambio,
+                                porcentajeDescuento);
 
-                        string nombreArchivo = $"Factura_Reservacion_{idReservacion:D4}.pdf";
+                            string nombreArchivo = $"Factura_Reservacion_{idReservacion:D4}.pdf";
 
-                        string asunto = $"Beach.SA - Comprobante de Reservación N° FAC-{idReservacion:D4}";
+                            string asunto = $"Beach.SA - Comprobante de Reservación N° FAC-{idReservacion:D4}";
 
-                        string cuerpo = $@"
+                            string cuerpo = $@"
 <html>
 <body style='font-family: Calibri, sans-serif; padding: 20px;'>
     <h2 style='color: #0d47a1;'>¡Reservación confirmada!</h2>
@@ -267,22 +274,23 @@ namespace API.Controllers
 </body>
 </html>";
 
-                        await emailServiceSnapshot.EnviarCorreoConAdjuntoAsync(
-                            clienteSnapshot.Email!,
-                            asunto,
-                            cuerpo,
-                            pdfBytes,
-                            nombreArchivo);
+                            await emailServiceSnapshot.EnviarCorreoConAdjuntoAsync(
+                                clienteSnapshot.Email!,
+                                asunto,
+                                cuerpo,
+                                pdfBytes,
+                                nombreArchivo);
 
-                        loggerSnapshot.LogInformation(
-                            "PDF y correo enviado para reservación {Id} a {Email}.",
-                            idReservacion, clienteSnapshot.Email);
-                    }
-                    catch (Exception ex)
-                    {
-                        loggerSnapshot.LogError(ex,
-                            "Error en tarea de fondo al generar PDF/email para reservación {Id}.",
-                            idReservacion);
+                            loggerSnapshot.LogInformation(
+                                "PDF y correo enviado para reservación {Id} a {Email}.",
+                                idReservacion, clienteSnapshot.Email);
+                        }
+                        catch (Exception ex)
+                        {
+                            loggerSnapshot.LogError(ex,
+                                "Error en tarea de fondo al generar PDF/email para reservación {Id}.",
+                                idReservacion);
+                        }
                     }
                 });
 

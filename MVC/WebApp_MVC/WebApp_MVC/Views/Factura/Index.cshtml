@@ -1,5 +1,227 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model List<WebApp_MVC.Models.Factura>
 @{
+    ViewData["Title"] = "Historial de Facturas";
 }
+
+<style>
+    body {
+        background: linear-gradient(135deg, #0f1115 0%, #1a1d24 100%) !important;
+        color: #f8f9fa !important;
+    }
+
+    .text-dark, h2, h5, .modal-title {
+        color: #ffffff !important;
+    }
+
+    .text-muted {
+        color: #a0aec0 !important;
+    }
+
+    .glass-card {
+        background: rgba(255, 255, 255, 0.02) !important;
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .table {
+        color: #e2e8f0 !important;
+    }
+
+    .table-hover tbody tr:hover td {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: #ffffff !important;
+    }
+
+    .modal-content {
+        background-color: #1a1d24 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #f8f9fa !important;
+    }
+
+    .form-control, .form-select {
+        background-color: #2d3748 !important;
+        border: 1px solid #4a5568 !important;
+        color: #ffffff !important;
+    }
+
+        .form-control:focus {
+            border-color: #0dcaf0 !important;
+            box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.25) !important;
+        }
+
+    .detalle-label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        color: #a0aec0;
+        margin-bottom: 0.2rem;
+        display: block;
+    }
+
+    .detalle-valor {
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+        color: #ffffff;
+    }
+</style>
+
+<div class="container mt-4 animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-receipt text-info"></i> Historial de Facturas</h2>
+    </div>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-lg mb-4" role="alert">
+            <strong><i class="bi bi-exclamation-triangle-fill me-1"></i> Error:</strong> @ViewBag.Error
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="table-responsive card glass-card shadow-lg p-3">
+        <table class="table table-hover align-middle m-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Factura #</th>
+                    <th>Reservación #</th>
+                    <th>Cliente</th>
+                    <th>Paquete</th>
+                    <th>Fecha Emisión</th>
+                    <th>Total (CRC)</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var fac in Model)
+                    {
+                        <tr class="border-secondary border-opacity-20">
+                            <td><strong class="text-info">@fac.IdFactura</strong></td>
+                            <td><span class="text-muted">#@fac.IdReservacion</span></td>
+                            <td>
+                                <div>@fac.Cedula</div>
+                                <small class="text-muted">@(fac.NombreCompleto ?? "N/A")</small>
+                            </td>
+                            <td><span class="text-info">@(fac.NombrePaquete ?? "N/A")</span></td>
+                            <td>@fac.FechaEmision.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="fw-bold text-success">₡@fac.TotalFinal.ToString("N2")</td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-info"
+                                        onclick="verDetalles('@fac.IdFactura', '@fac.IdReservacion', '@fac.Cedula', '@(fac.NombreCompleto ?? "N/A")', '@(fac.CorreoElectronico ?? "N/A")', '@(fac.Telefono ?? "N/A")', '@(fac.NombrePaquete ?? "N/A")', '@fac.PrecioPorNoche.ToString("N2")', '@fac.CantidadNoches', '@fac.CantidadPersonas', '@fac.SubTotal.ToString("N2")', '@fac.Descuento.ToString("N2")', '@fac.PorcentajeDescuento.ToString("N2")', '@fac.MontoGravable.ToString("N2")', '@fac.IVA.ToString("N2")', '@fac.TotalFinal.ToString("N2")', '@fac.TipoCambio.ToString("N2")', '@fac.TotalDolares.ToString("N2")', '@(fac.MetodoPago ?? "N/A")', '@fac.FechaEmision.ToString("dd/MM/yyyy HH:mm")')">
+                                    <i class="bi bi-eye"></i> Ver
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">No hay facturas registradas.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDetalles" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark border-bottom border-secondary">
+                <h5 class="modal-title"><i class="bi bi-receipt-cutoff text-info me-2"></i>Detalles de la Factura #<span id="det-idfac"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                <div class="d-flex justify-content-between border-bottom border-secondary pb-2 mb-3">
+                    <h6 class="text-info m-0">Información del Cliente</h6>
+                    <span class="badge bg-secondary text-light fs-6">Reservación vinculada: #<span id="det-idres"></span></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3"><span class="detalle-label">Cédula</span><div class="detalle-valor" id="det-cedula"></div></div>
+                    <div class="col-md-4"><span class="detalle-label">Nombre Completo</span><div class="detalle-valor" id="det-nombre"></div></div>
+                    <div class="col-md-3"><span class="detalle-label">Correo Electrónico</span><div class="detalle-valor text-truncate" id="det-correo"></div></div>
+                    <div class="col-md-2"><span class="detalle-label">Teléfono</span><div class="detalle-valor" id="det-telefono"></div></div>
+                </div>
+
+                <h6 class="text-info border-bottom border-secondary pb-2 mb-3 mt-2">Detalles del Servicio</h6>
+                <div class="row">
+                    <div class="col-md-4"><span class="detalle-label">Paquete</span><div class="detalle-valor" id="det-paquete"></div></div>
+                    <div class="col-md-3"><span class="detalle-label">Precio por Noche</span><div class="detalle-valor">₡<span id="det-precionoche"></span></div></div>
+                    <div class="col-md-2"><span class="detalle-label">Noches</span><div class="detalle-valor" id="det-noches"></div></div>
+                    <div class="col-md-3"><span class="detalle-label">Personas</span><div class="detalle-valor" id="det-personas"></div></div>
+                </div>
+
+                <h6 class="text-success border-bottom border-secondary pb-2 mb-3 mt-2">Desglose Fiscal y Económico</h6>
+                <div class="row">
+                    <div class="col-md-4"><span class="detalle-label">SubTotal</span><div class="detalle-valor">₡<span id="det-subtotal"></span></div></div>
+                    <div class="col-md-4"><span class="detalle-label text-warning">Descuento (<span id="det-porcdesc"></span>%)</span><div class="detalle-valor text-warning">- ₡<span id="det-descuento"></span></div></div>
+                    <div class="col-md-4"><span class="detalle-label">Monto Gravable</span><div class="detalle-valor">₡<span id="det-gravable"></span></div></div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4"><span class="detalle-label">I.V.A.</span><div class="detalle-valor">₡<span id="det-iva"></span></div></div>
+                    <div class="col-md-4"><span class="detalle-label">Método de Pago</span><div class="detalle-valor" id="det-metodo"></div></div>
+                    <div class="col-md-4"><span class="detalle-label">Fecha Emisión</span><div class="detalle-valor" id="det-fecha"></div></div>
+                </div>
+
+                <div class="row bg-dark p-3 rounded mt-2 border border-secondary">
+                    <div class="col-md-6 border-end border-secondary">
+                        <span class="detalle-label text-success fw-bold">Total Facturado (CRC)</span>
+                        <div class="detalle-valor text-success fs-3 mb-0">₡<span id="det-totalcrc"></span></div>
+                    </div>
+                    <div class="col-md-6 ps-4">
+                        <span class="detalle-label text-info fw-bold">Total Equivalente (USD)</span>
+                        <div class="detalle-valor text-info fs-4 mb-0">$<span id="det-totalusd"></span></div>
+                        <small class="text-muted">Tipo de cambio aplicado: ₡<span id="det-tipocambio"></span></small>
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer bg-dark bg-opacity-50 border-top border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Función para cargar los datos en el modal de Detalles de Factura
+    function verDetalles(idFac, idRes, cedula, nombre, correo, telefono, paquete, precioNoche, noches, personas, subtotal, descuento, porcDesc, gravable, iva, totalCrc, tipoCambio, totalUsd, metodo, fecha) {
+
+        // Encabezado
+        document.getElementById('det-idfac').innerText = idFac;
+        document.getElementById('det-idres').innerText = idRes;
+
+        // Cliente
+        document.getElementById('det-cedula').innerText = cedula;
+        document.getElementById('det-nombre').innerText = nombre;
+        document.getElementById('det-correo').innerText = correo;
+        document.getElementById('det-telefono').innerText = telefono;
+
+        // Servicio
+        document.getElementById('det-paquete').innerText = paquete;
+        document.getElementById('det-precionoche').innerText = precioNoche;
+        document.getElementById('det-noches').innerText = noches;
+        document.getElementById('det-personas').innerText = personas;
+
+        // Economía
+        document.getElementById('det-subtotal').innerText = subtotal;
+        document.getElementById('det-porcdesc').innerText = porcDesc;
+        document.getElementById('det-descuento').innerText = descuento;
+        document.getElementById('det-gravable').innerText = gravable;
+        document.getElementById('det-iva').innerText = iva;
+        document.getElementById('det-metodo').innerText = metodo;
+        document.getElementById('det-fecha').innerText = fecha;
+
+        // Totales
+        document.getElementById('det-totalcrc').innerText = totalCrc;
+        document.getElementById('det-tipocambio').innerText = tipoCambio;
+        document.getElementById('det-totalusd').innerText = totalUsd;
+
+        // Mostrar el modal
+        var modal = new bootstrap.Modal(document.getElementById('modalDetalles'));
+        modal.show();
+    }
+</script>

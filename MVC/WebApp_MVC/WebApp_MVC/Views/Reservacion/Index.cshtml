@@ -1,5 +1,318 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model List<WebApp_MVC.Models.Reservacion>
 @{
+    ViewData["Title"] = "Gestión de Reservaciones";
 }
+
+<style>
+    body {
+        background: linear-gradient(135deg, #0f1115 0%, #1a1d24 100%) !important;
+        color: #f8f9fa !important;
+    }
+
+    .text-dark, h2, h5, .modal-title {
+        color: #ffffff !important;
+    }
+
+    .text-muted {
+        color: #a0aec0 !important;
+    }
+
+    .glass-card {
+        background: rgba(255, 255, 255, 0.02) !important;
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .table {
+        color: #e2e8f0 !important;
+    }
+
+    .table-hover tbody tr:hover td {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: #ffffff !important;
+    }
+
+    .modal-content {
+        background-color: #1a1d24 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #f8f9fa !important;
+    }
+
+    .form-control, .form-select {
+        background-color: #2d3748 !important;
+        border: 1px solid #4a5568 !important;
+        color: #ffffff !important;
+    }
+
+        .form-control:focus {
+            border-color: #0dcaf0 !important;
+            box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.25) !important;
+        }
+
+    .detalle-label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        color: #a0aec0;
+        margin-bottom: 0.2rem;
+        display: block;
+    }
+
+    .detalle-valor {
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+        color: #ffffff;
+    }
+</style>
+
+<div class="container mt-4 animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-calendar-check-fill text-info"></i> Gestión de Reservaciones</h2>
+        <button class="btn btn-info fw-bold shadow-sm text-dark" data-bs-toggle="modal" data-bs-target="#modalReservacion">
+            <i class="bi bi-plus-circle"></i> Nueva Reservación
+        </button>
+    </div>
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-lg mb-4" role="alert">
+            <strong><i class="bi bi-exclamation-triangle-fill me-1"></i> Error:</strong> @ViewBag.Error
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="table-responsive card glass-card shadow-lg p-3">
+        <table class="table table-hover align-middle m-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Cédula Cliente</th>
+                    <th>Paquete</th>
+                    <th>Noches</th>
+                    <th>Personas</th>
+                    <th>Total (CRC)</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var res in Model)
+                    {
+                        <tr class="border-secondary border-opacity-20">
+                            <td><strong class="text-info">@res.IdReservacion</strong></td>
+                            <td>@res.Cedula</td>
+                            <td>
+                                @{
+                                    var paquete = (ViewBag.Paquetes as List<WebApp_MVC.Models.Paquete>)?.FirstOrDefault(p => p.IdPaquete == res.IdPaquete);
+                                    var nombrePaquete = paquete != null ? paquete.Descripcion : "ID: " + res.IdPaquete;
+                                }
+                                <span class="@(paquete != null ? "text-info" : "text-muted")">@nombrePaquete</span>
+                            </td>
+                            <td>@res.CantidadNoches</td>
+                            <td>@res.CantidadPersonas</td>
+                            <td class="fw-bold text-success">₡@res.TotalFinal.ToString("N2")</td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-info me-1"
+                                        onclick="verDetalles('@res.IdReservacion', '@res.Cedula', '@nombrePaquete', '@res.CantidadNoches', '@res.CantidadPersonas', '@res.MetodoPago', '@res.NumeroCheque', '@res.BancoCheque', '@res.SubTotal.ToString("N2")', '@res.Descuento.ToString("N2")', '@res.IVA.ToString("N2")', '@res.TotalFinal.ToString("N2")', '@res.Prima.ToString("N2")', '@res.Mensualidad.ToString("N2")', '@res.TipoCambio.ToString("N2")', '@res.TotalDolares.ToString("N2")', '@res.FechaReservacion.ToString("dd/MM/yyyy HH:mm")')">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+
+                                <form asp-controller="Reservacion" asp-action="Delete" method="post" onsubmit="return confirm('¿Seguro que desea eliminar la reservación @res.IdReservacion?');" style="display:inline;">
+                                    <input type="hidden" name="id" value="@res.IdReservacion" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger fw-semibold"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">No hay reservaciones registradas.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="modalReservacion" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark border-bottom border-secondary">
+                <h5 class="modal-title"><i class="bi bi-calendar-plus-fill text-info me-2"></i>Nueva Reservación</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-controller="Reservacion" asp-action="Create" method="post">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold text-secondary">Cédula del Cliente</label>
+                            <input type="text" name="Cedula" class="form-control" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold text-secondary">Paquete Turístico</label>
+                            <select name="IdPaquete" class="form-select" required>
+                                <option value="">-- Seleccione un paquete --</option>
+                                @if (ViewBag.Paquetes != null)
+                                {
+                                    foreach (var paquete in ViewBag.Paquetes)
+                                    {
+                                        <option value="@paquete.IdPaquete">@paquete.Descripcion - ₡@paquete.PrecioPorNoche</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold text-secondary">Cantidad de Noches</label>
+                            <input type="number" name="CantidadNoches" class="form-control" min="1" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold text-secondary">Cantidad de Personas</label>
+                            <input type="number" name="CantidadPersonas" class="form-control" min="1" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">Método de Pago</label>
+                        <select name="MetodoPago" id="MetodoPagoSelect" class="form-select" required onchange="toggleChequeFields()">
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Tarjeta">Tarjeta</option>
+                            <option value="Cheque">Cheque</option>
+                        </select>
+                    </div>
+
+                    <div class="row" id="camposCheque" style="display: none;">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold text-secondary">Número de Cheque</label>
+                            <input type="text" name="NumeroCheque" id="NumeroCheque" class="form-control" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold text-secondary">Banco del Cheque</label>
+                            <input type="text" name="BancoCheque" id="BancoCheque" class="form-control" />
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3 border-0 bg-dark text-info">
+                        <i class="bi bi-info-circle-fill me-2"></i> Los cálculos de IVA, descuentos, prima y mensualidades se generarán automáticamente al registrar.
+                    </div>
+                </div>
+                <div class="modal-footer bg-dark bg-opacity-50 border-top border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info text-dark fw-bold">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDetalles" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-dark border-bottom border-secondary">
+                <h5 class="modal-title"><i class="bi bi-info-circle-fill text-info me-2"></i>Detalles de la Reservación #<span id="det-id"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+
+                <h6 class="text-info border-bottom border-secondary pb-2 mb-3">Información General</h6>
+                <div class="row">
+                    <div class="col-md-4"><span class="detalle-label">Cédula Cliente</span><div class="detalle-valor" id="det-cedula"></div></div>
+                    <div class="col-md-4"><span class="detalle-label">Paquete</span><div class="detalle-valor" id="det-paquete"></div></div>
+                    <div class="col-md-4"><span class="detalle-label">Fecha de Registro</span><div class="detalle-valor" id="det-fecha"></div></div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4"><span class="detalle-label">Noches</span><div class="detalle-valor" id="det-noches"></div></div>
+                    <div class="col-md-4"><span class="detalle-label">Personas</span><div class="detalle-valor" id="det-personas"></div></div>
+                </div>
+
+                <h6 class="text-info border-bottom border-secondary pb-2 mb-3 mt-2">Información de Pago</h6>
+                <div class="row">
+                    <div class="col-md-4"><span class="detalle-label">Método de Pago</span><div class="detalle-valor" id="det-metodo"></div></div>
+                    <div class="col-md-4"><span class="detalle-label">No. Cheque</span><div class="detalle-valor" id="det-numcheque"></div></div>
+                    <div class="col-md-4"><span class="detalle-label">Banco Cheque</span><div class="detalle-valor" id="det-bancocheque"></div></div>
+                </div>
+
+                <h6 class="text-success border-bottom border-secondary pb-2 mb-3 mt-2">Desglose Económico</h6>
+                <div class="row">
+                    <div class="col-md-4"><span class="detalle-label">SubTotal</span><div class="detalle-valor">₡<span id="det-subtotal"></span></div></div>
+                    <div class="col-md-4"><span class="detalle-label text-warning">Descuento</span><div class="detalle-valor text-warning">- ₡<span id="det-descuento"></span></div></div>
+                    <div class="col-md-4"><span class="detalle-label">I.V.A. (13%)</span><div class="detalle-valor">₡<span id="det-iva"></span></div></div>
+                </div>
+
+                <div class="row bg-dark p-3 rounded mt-2 border border-secondary">
+                    <div class="col-md-6 border-end border-secondary">
+                        <span class="detalle-label text-success fw-bold">Total a Pagar (CRC)</span>
+                        <div class="detalle-valor text-success fs-3 mb-0">₡<span id="det-totalcrc"></span></div>
+                    </div>
+                    <div class="col-md-6 ps-4">
+                        <span class="detalle-label text-info fw-bold">Total en Dólares (USD)</span>
+                        <div class="detalle-valor text-info fs-4 mb-0">$<span id="det-totalusd"></span></div>
+                        <small class="text-muted">Tipo de cambio aplicado: ₡<span id="det-tipocambio"></span></small>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-6"><span class="detalle-label">Prima / Enganche</span><div class="detalle-valor">₡<span id="det-prima"></span></div></div>
+                    <div class="col-md-6"><span class="detalle-label">Mensualidad Calculada</span><div class="detalle-valor">₡<span id="det-mensualidad"></span></div></div>
+                </div>
+
+            </div>
+            <div class="modal-footer bg-dark bg-opacity-50 border-top border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Función para mostrar/ocultar campos de cheque en el modal de Crear
+    function toggleChequeFields() {
+        var metodo = document.getElementById("MetodoPagoSelect").value;
+        var divCheque = document.getElementById("camposCheque");
+        var inputNum = document.getElementById("NumeroCheque");
+        var inputBanco = document.getElementById("BancoCheque");
+
+        if (metodo === "Cheque") {
+            divCheque.style.display = "flex";
+            inputNum.required = true;
+            inputBanco.required = true;
+        } else {
+            divCheque.style.display = "none";
+            inputNum.required = false;
+            inputBanco.required = false;
+            inputNum.value = "";
+            inputBanco.value = "";
+        }
+    }
+
+    // Función para cargar los datos en el modal de Detalles
+    function verDetalles(id, cedula, paquete, noches, personas, metodo, numCheque, bancoCheque, subtotal, descuento, iva, totalcrc, prima, mensualidad, tipocambio, totalusd, fecha) {
+
+        document.getElementById('det-id').innerText = id;
+        document.getElementById('det-cedula').innerText = cedula;
+        document.getElementById('det-paquete').innerText = paquete;
+        document.getElementById('det-noches').innerText = noches;
+        document.getElementById('det-personas').innerText = personas;
+        document.getElementById('det-fecha').innerText = fecha;
+
+        document.getElementById('det-metodo').innerText = metodo;
+        document.getElementById('det-numcheque').innerText = numCheque || "N/A";
+        document.getElementById('det-bancocheque').innerText = bancoCheque || "N/A";
+
+        document.getElementById('det-subtotal').innerText = subtotal;
+        document.getElementById('det-descuento').innerText = descuento;
+        document.getElementById('det-iva').innerText = iva;
+        document.getElementById('det-totalcrc').innerText = totalcrc;
+        document.getElementById('det-prima').innerText = prima;
+        document.getElementById('det-mensualidad').innerText = mensualidad;
+        document.getElementById('det-tipocambio').innerText = tipocambio;
+        document.getElementById('det-totalusd').innerText = totalusd;
+
+        // Mostrar el modal
+        var modal = new bootstrap.Modal(document.getElementById('modalDetalles'));
+        modal.show();
+    }
+</script>
