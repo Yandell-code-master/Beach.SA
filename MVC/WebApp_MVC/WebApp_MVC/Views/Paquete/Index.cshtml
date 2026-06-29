@@ -1,0 +1,142 @@
+﻿@model List<WebApp_MVC.Models.Paquete>
+@{
+    ViewData["Title"] = "Mantenimiento de Paquetes";
+}
+
+<!-- ESTILOS MODO OSCURO PREMIUM -->
+<style>
+    body {
+        background: linear-gradient(135deg, #0f1115 0%, #1a1d24 100%) !important;
+        color: #f8f9fa !important;
+    }
+    .text-dark, h2, h5, .modal-title { color: #ffffff !important; }
+    .text-muted { color: #a0aec0 !important; }
+
+    /* Contenedor Translúcido de la Tabla */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.02) !important;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* Tabla Estilizada */
+    .table { color: #e2e8f0 !important; }
+    .table-hover cubic-bezier tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.04) !important;
+    }
+    
+    /* Modales en Modo Oscuro */
+    .modal-content {
+        background-color: #1a1d24 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #f8f9fa !important;
+    }
+    .form-control, .form-select {
+        background-color: #2d3748 !important;
+        border: 1px solid #4a5568 !important;
+        color: #ffffff !important;
+    }
+    .form-control:focus, .form-select:focus {
+        background-color: #2d3748 !important;
+        color: #ffffff !important;
+        border-color: #0dcaf0 !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.25) !important;
+    }
+</style>
+
+<div class="container mt-4 animate__animated animate__fadeIn">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-box-seam-fill text-info"></i> Catálogo de Paquetes Vacacionales</h2>
+        <button class="btn btn-info fw-bold shadow-sm text-dark" data-bs-toggle="modal" data-bs-target="#modalPaquete">
+            <i class="bi bi-plus-circle"></i> Agregar Paquete
+        </button>
+    </div>
+
+    <div class="table-responsive card glass-card shadow-lg p-3">
+        <table class="table table-hover align-middle m-0">
+            <thead class="table-dark">
+                <tr class="border-secondary">
+                    <th>ID</th>
+                    <th>Descripción / Nombre</th>
+                    <th>Precio x Noche</th>
+                    <th>Prima Requerida</th>
+                    <th>Financiamiento</th>
+                    <th>Estado</th>
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+           <tbody>
+    @if (Model != null && Model.Any())
+    {
+        foreach (var paquete in Model)
+        {
+            <tr class="border-secondary border-opacity-20">
+                <td>@paquete.IdPaquete</td>
+                <td><strong class="text-white">@paquete.Descripcion</strong></td>
+                <td class="text-info fw-bold">$@paquete.PrecioPorNoche.ToString("F2")</td>
+                <td>@(paquete.Prima * 100)%</td>
+                <td>@paquete.Meses meses</td>
+                <td>
+                    <span class="badge @(paquete.Estado ? "bg-success" : "bg-danger") shadow-sm">
+                        @(paquete.Estado ? "Activo" : "Inactivo")
+                    </span>
+                </td>
+                <td class="text-center">
+                    <form asp-controller="Paquete" asp-action="Delete" method="post" onsubmit="return confirm('¿Desea deshabilitar este paquete?');" style="display:inline;">
+                        <input type="hidden" name="id" value="@paquete.IdPaquete" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger fw-semibold" @(paquete.Estado ? "" : "disabled")>
+                            <i class="bi bi-eye-slash"></i> Desactivar
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+    }
+    else
+    {
+        <tr>
+            <td colspan="7" class="text-center text-muted py-4">No hay paquetes activos registrados.</td>
+        </tr>
+    }
+</tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal para Crear Paquetes (Modo Oscuro) -->
+<div class="modal fade" id="modalPaquete" tabindex="-1" aria-labelledby="modalPaqueteLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-dark border-bottom border-secondary text-white">
+                <h5 class="modal-title" id="modalPaqueteLabel"><i class="bi bi-plus-circle text-info me-2"></i>Nuevo Paquete Vacacional</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="Paquete" asp-action="Create" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">Descripción del Paquete</label>
+                        <input type="text" name="Descripcion" class="form-control" placeholder="Ej: Todo incluido, Alimentación..." required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">Precio por Persona por Noche (USD)</label>
+                        <input type="number" step="0.01" name="PrecioPorNoche" class="form-control" placeholder="Ej: 450.00" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">Porcentaje de Prima (En decimales)</label>
+                        <input type="number" step="0.01" min="0" max="1" name="Prima" class="form-control" placeholder="Ej: 0.45 para 45%" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-secondary">Plazo de Financiamiento (Meses)</label>
+                        <input type="number" name="Meses" class="form-control" placeholder="Ej: 24" required />
+                    </div>
+                    <input type="hidden" name="Estado" value="true" />
+                </div>
+                <div class="modal-footer bg-dark bg-opacity-50 border-top border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info text-dark fw-bold">Registrar Paquete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

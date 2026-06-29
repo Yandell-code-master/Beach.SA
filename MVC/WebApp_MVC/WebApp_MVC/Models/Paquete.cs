@@ -1,12 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace API.Models
+namespace WebApp_MVC.Models
 {
     public class Paquete
     {
         [Key]
-        
+        [JsonIgnore]
         public int IdPaquete { get; set; }
 
         [Required(ErrorMessage = "La descripción es obligatoria.")]
