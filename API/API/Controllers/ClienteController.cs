@@ -36,41 +36,50 @@ namespace API.Controllers
         [Route("Create")]
         public async Task<IActionResult> Create(Cliente cliente)
         {
-                Cliente clienteBuscado = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cliente.Cedula);
+            if (string.IsNullOrWhiteSpace(cliente.Cedula) || !System.Text.RegularExpressions.Regex.IsMatch(cliente.Cedula, @"^[0-9]+$"))
+            {
+                return BadRequest("El número de cédula no es válido. Debe contener únicamente números, sin letras ni caracteres especiales.");
+            }
 
+            if (cliente.Cedula.Length < 9 || cliente.Cedula.Length > 15)
+            {
+                return BadRequest("La longitud del número de cédula es incorrecta.");
+            }
+
+            Cliente clienteBuscado = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cliente.Cedula);
 
             if (clienteBuscado != null)
             {
                 return BadRequest("Ya existe un cliente con esa cédula.");
             }
 
-            HttpResponseMessage response = await client.GetAsync($"cedulas/{cliente.Cedula}");
-            string json = await response.Content.ReadAsStringAsync();
-            ClienteGometaDTO clienteDTO = JsonConvert.DeserializeObject<ClienteGometaDTO>(json);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                return BadRequest("La cédula no es válida.");
+                HttpResponseMessage response = await client.GetAsync($"cedulas/{cliente.Cedula}");
+                string json = await response.Content.ReadAsStringAsync();
+                ClienteGometaDTO clienteDTO = JsonConvert.DeserializeObject<ClienteGometaDTO>(json);
+
+                if (!response.IsSuccessStatusCode || clienteDTO == null)
+                {
+                    return BadRequest("La cédula no es válida o no fue encontrada en el padrón.");
+                }
+
+                if (clienteDTO.Error != null)
+                {
+                    return BadRequest(clienteDTO.Error);
+                }
+
+                cliente.NombreCompleto = clienteDTO.nombre;
+                cliente.TipoCedula = clienteDTO.tipoIdentificacion;
+
+                this.dbContextBeach.Clientes.Add(cliente);
+                this.dbContextBeach.SaveChanges();
+                return Ok(cliente);
             }
-
-
-            if (clienteDTO.Error != null)
+            catch (Exception ex)
             {
-                return BadRequest(clienteDTO.Error);
+                return BadRequest("Ocurrió un error al validar la cédula con el servicio externo: " + ex.Message);
             }
-
-
-            if (clienteDTO == null)
-            {
-                return BadRequest("La cédula no es válida.");
-            }
-
-            cliente.NombreCompleto = clienteDTO.nombre;
-            cliente.TipoCedula = clienteDTO.tipoIdentificacion;
-
-            this.dbContextBeach.Clientes.Add(cliente);
-            this.dbContextBeach.SaveChanges();
-            return Ok(cliente);
         }
 
         [HttpPut]
@@ -98,15 +107,23 @@ namespace API.Controllers
         [Route("Delete")]
         public IActionResult Delete(string cedula)
         {
-            Cliente clientePorEliminar = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cedula);
-            if (clientePorEliminar == null)
+            try
             {
-                return NotFound("No se encontró un cliente con ese ID.");
-            }
+                Cliente clientePorEliminar = this.dbContextBeach.Clientes.FirstOrDefault(c => c.Cedula == cedula);
+                if (clientePorEliminar == null)
+                {
+                    return NotFound("No se encontró un cliente con ese ID.");
+                }
 
-            this.dbContextBeach.Clientes.Remove(clientePorEliminar);
-            this.dbContextBeach.SaveChanges();
-            return Ok();
+                this.dbContextBeach.Clientes.Remove(clientePorEliminar);
+                this.dbContextBeach.SaveChanges();
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+               
+                return BadRequest("Usuario tiene reservaciones, no se puede eliminar");
+            }
         }
 
         [HttpGet]

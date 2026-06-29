@@ -1,0 +1,183 @@
+﻿@{
+    ViewData["Title"] = "Panel de Control";
+}
+
+
+<style>
+ 
+    body {
+        background: linear-gradient(135deg, #0f1115 0%, #1a1d24 100%) !important;
+        color: #f8f9fa !important;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    
+    .text-dark, h1, h5, .card-title {
+        color: #ffffff !important;
+    }
+    
+    .text-muted, .card-text {
+        color: #a0aec0 !important;
+    }
+
+ 
+    .custom-card {
+        background: rgba(255, 255, 255, 0.03) !important;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+    }
+
+    .custom-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(13, 202, 240, 0.15) !important;
+    }
+
+    /* CONTENEDOR DE LAS OLAS */
+    .waves-container {
+        position: fixed;
+        width: 100%;
+        bottom: 0;
+        left: 0;
+        height: 12vh;
+        min-height: 100px;
+        max-height: 150px;
+        z-index: -1; 
+        pointer-events: none;
+    }
+
+    /* Animaciones de las Olas */
+    .wave-parallax > use {
+        animation: move-forever 25s cubic-bezier(.55,.5,.45,.5) infinite;
+    }
+    .wave-parallax > use:nth-child(1) {
+        animation-delay: -2s;
+        animation-duration: 7s;
+    }
+    .wave-parallax > use:nth-child(2) {
+        animation-delay: -3s;
+        animation-duration: 10s;
+    }
+    .wave-parallax > use:nth-child(3) {
+        animation-delay: -4s;
+        animation-duration: 13s;
+    }
+    .wave-parallax > use:nth-child(4) {
+        animation-delay: -5s;
+        animation-duration: 20s;
+    }
+
+    @@keyframes move-forever {
+        0% { transform: translate3d(-90px,0,0); }
+        100% { transform: translate3d(85px,0,0); }
+    }
+</style>
+
+<!-- Encabezado Principal -->
+<div class="row mb-4 pt-3">
+    <div class="col-12 text-center text-md-start">
+        <h1 class="display-5 fw-bold m-0">
+            <i class="bi bi-speedometer2 text-info me-2"></i>Bienvenido al Sistema
+        </h1>
+        <p class="text-muted fs-5 ms-md-5">Gestión operativa y administrativa de <strong class="text-info">Beach SA</strong></p>
+    </div>
+</div>
+
+<hr class="mb-4 border-light opacity-10">
+
+
+<div class="row g-4 justify-content-center">
+    
+    <!-- Módulo de Clientes -->
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 custom-card border-top border-4 border-primary">
+            <div class="card-body p-4 d-flex flex-column">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-primary bg-opacity-25 p-3 rounded-3 me-3 text-primary fs-3">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <h5 class="card-title fw-bold m-0">Clientes</h5>
+                </div>
+                <p class="card-text small flex-grow-1">
+                    Administra el catálogo general, valida identificaciones mediante la API de Gometa y gestiona la información de contacto.
+                </p>
+                <a asp-controller="Cliente" asp-action="Index" class="btn btn-outline-primary w-100 mt-3 fw-semibold">
+                    Ir a Catálogo <i class="bi bi-arrow-right-short ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulo de Paquetes -->
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 custom-card border-top border-4 border-success">
+            <div class="card-body p-4 d-flex flex-column">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success bg-opacity-25 p-3 rounded-3 me-3 text-success fs-3">
+                        <i class="bi bi-box-seam-fill"></i>
+                    </div>
+                    <h5 class="card-title fw-bold m-0">Paquetes Vacacionales</h5>
+                </div>
+                <p class="card-text small flex-grow-1">
+                    Configura los planes de hospedaje, precios por noche, meses de financiamiento y realiza la desactivación lógica de ofertas.
+                </p>
+                <a asp-controller="Paquete" asp-action="Index" class="btn btn-outline-success w-100 mt-3 fw-semibold">
+                    Gestionar Planes <i class="bi bi-arrow-right-short ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulo de Reservaciones -->
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100 custom-card border-top border-4 border-warning">
+            <div class="card-body p-4 d-flex flex-column">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-warning bg-opacity-25 p-3 rounded-3 me-3 text-warning fs-3">
+                        <i class="bi bi-calendar-check-fill"></i>
+                    </div>
+                    <h5 class="card-title fw-bold m-0">Reservaciones</h5>
+                </div>
+                <p class="card-text small flex-grow-1">
+                    Controla las fechas de estadía de los huéspedes, asocia clientes a los paquetes activos y gestiona agendas.
+                </p>
+                <a asp-controller="Reservacion" asp-action="Index" class="btn btn-outline-warning w-100 mt-3 fw-semibold">
+                    Ver Agenda <i class="bi bi-arrow-right-short ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Banner Informativo de Seguridad -->
+<div class="row mt-5 mb-5">
+    <div class="col-12">
+        <div class="bg-dark bg-opacity-50 border border-secondary border-opacity-25 text-white rounded-3 p-4 shadow-sm d-flex flex-column flex-md-row align-items-center justify-content-between">
+            <div class="mb-3 mb-md-0 text-center text-md-start">
+                <h5 class="fw-bold m-0 text-info"><i class="bi bi-lock-fill me-2"></i>Entorno de Datos Protegido</h5>
+                <p class="text-muted small m-0 mt-1">Tu sesión se encuentra firmada con un token Bearer (JWT) válido. Las solicitudes a la API central están cifradas.</p>
+            </div>
+            <span class="badge bg-success py-2 px-3 fw-bold shadow-sm"><i class="bi bi-check-circle-fill me-1"></i> Conexión Segura</span>
+        </div>
+    </div>
+</div>
+
+
+<div class="waves-container">
+    <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+         viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto" style="width: 100%; height: 100%;">
+        <defs>
+            <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s58 18 88 18 58-18 88-18 58 18 88 18v44h-352z" />
+        </defs>
+        <g class="wave-parallax">
+            
+            <use xlink:href="#gentle-wave" x="48" y="0" fill="rgba(13, 202, 240, 0.07)" />
+            <use xlink:href="#gentle-wave" x="48" y="3" fill="rgba(13, 110, 253, 0.05)" />
+            <use xlink:href="#gentle-wave" x="48" y="5" fill="rgba(255, 255, 255, 0.02)" />
+            <use xlink:href="#gentle-wave" x="48" y="7" fill="rgba(15, 17, 21, 1)" /> 
+        </g>
+    </svg>
+</div>
